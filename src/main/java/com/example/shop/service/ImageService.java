@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.shop.dto.ImageDTO;
 import com.example.shop.mapper.ImageMapper;
-import com.example.shop.model.Image;
+import com.example.shop.model.Images;
 import com.example.shop.repository.ImageRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -21,20 +21,20 @@ public class ImageService {
     private final ProductService productService;
 
     // 0) Добавить/Создать картинку
-    public Image addImage(ImageDTO imageDto) {
+    public Images addImage(ImageDTO imageDto) {
         return imageRepository.save(imageMapper.toEntity(imageDto));
     }
 
     // 1) Обновить картинку у продукта
-    public Image updateImageProduct(UUID productId, ImageDTO imageDto) {
-        Image image = addImage(imageDto);
+    public Images updateImageProduct(UUID productId, ImageDTO imageDto) {
+        Images image = addImage(imageDto);
         productService.updateImage(productId, image);
         return imageRepository.save(image);
     }
 
     // 2) Обновить картинку по id
-    public Image updateImage(UUID id, ImageDTO imageDTO) {
-        Image image = imageRepository.findById(id).orElseThrow();
+    public Images updateImage(UUID id, ImageDTO imageDTO) {
+        Images image = imageRepository.findById(id).orElseThrow();
         image.setImage(imageDTO.getImage());
         return imageRepository.save(image);
     }
@@ -45,12 +45,12 @@ public class ImageService {
     }
 
     // 4) Найти картинку у продукта
-    public Image findImageProduct(UUID productId) {
+    public Images findImageProduct(UUID productId) {
         return productService.getImage(productId);
     }
 
     // 5) Поиск по имени и фамилии
-    public Image getById(UUID id) {
+    public Images getById(UUID id) {
         return imageRepository.findById(id).orElseThrow();
     }
 

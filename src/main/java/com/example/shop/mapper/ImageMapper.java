@@ -4,14 +4,14 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import com.example.shop.dto.ImageDTO;
-import com.example.shop.model.Image;
+import com.example.shop.model.Images;
 
 @Mapper(componentModel = "spring")
 public interface ImageMapper {
 
     @Mapping(target = "id", ignore = true)
-    Image toEntity(ImageDTO dto);
+    Images toEntity(ImageDTO dto);
 
     @Mapping(source = "image", target = "image")
-    ImageDTO toDto(Image entity);
+    ImageDTO toDto(Images entity);
 }

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,17 +20,18 @@ import com.example.shop.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/product")
+@RequestMapping("/api/v1/product")
+@RequiredArgsConstructor
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
     // 1) Добавление клиента
     @Operation(summary = "Добавление продукта", description = "Добавляет новый продукт")
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<?> addProduct(@Valid @RequestBody ProductDTO productDto, BindingResult result) {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(getErrorMessages(result));

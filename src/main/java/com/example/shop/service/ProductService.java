@@ -9,8 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.shop.dto.ProductDTO;
 import com.example.shop.exception.InsufficientStockException;
 import com.example.shop.mapper.ProductMapper;
-import com.example.shop.model.Image;
+import com.example.shop.model.Images;
 import com.example.shop.model.Product;
+import com.example.shop.model.Supplier;
 import com.example.shop.repository.ProductRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -24,9 +25,13 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
+    private final SupplierService supplierService;
+
     // 1) Добавление товара
     public Product addProduct(ProductDTO productDto) {
         Product product = productMapper.toEntity(productDto);
+        Supplier supplier = supplierService.getById(productDto.getSupplierId());
+        product.setSupplier(supplier);
         return productRepository.save(product);
     }
 
@@ -60,14 +65,14 @@ public class ProductService {
     }
 
     // 6) Обновление картинки
-    public Product updateImage(UUID id, Image image) {
+    public Product updateImage(UUID id, Images image) {
         Product product = findById(id);
         product.setImage(image);
         return productRepository.save(product);
     }
 
     // 7) Удаление товара
-    public Image getImage(UUID id) {
+    public Images getImage(UUID id) {
         return findById(id).getImage();
     }
 

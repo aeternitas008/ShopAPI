@@ -9,12 +9,12 @@ import com.example.shop.model.Product;
 @Mapper(componentModel = "spring", uses = { ImageMapper.class, SupplierMapper.class })
 public interface ProductMapper {
 
-    @Mapping(source = "supplierDto", target = "supplier")
+    @Mapping(target = "supplier", ignore = true)
     @Mapping(source = "imageDto", target = "image")
     @Mapping(target = "id", ignore = true)
     Product toEntity(ProductDTO dto);
 
-    @Mapping(source = "supplier", target = "supplierDto")
+    @Mapping(source = "supplier.id", target = "supplierId")
     @Mapping(source = "image", target = "imageDto")
     ProductDTO toDto(Product entity);
 

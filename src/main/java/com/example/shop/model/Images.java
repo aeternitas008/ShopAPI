@@ -17,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Image {
+public class Images {
 
     @Id
     @GeneratedValue(generator = "UUID")

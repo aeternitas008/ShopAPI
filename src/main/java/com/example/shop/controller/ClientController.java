@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,13 +24,14 @@ import com.example.shop.service.ClientService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/client")
+@RequestMapping("/api/v1/client")
+@RequiredArgsConstructor
 public class ClientController {
 
-    @Autowired
-    private ClientService clientService;
+    private final ClientService clientService;
 
     // 1) Добавление клиента
     @PostMapping("/add")
@@ -46,7 +46,7 @@ public class ClientController {
 
     // 2) Удаление клиента
     @Operation(summary = "Удаление клиента", description = "Удаление клиента по id")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteClient(@PathVariable UUID id) {
         if (!clientService.existsById(id)) {
             return ResponseEntity.badRequest().body("Клиент с ID " + id + " не найден");
@@ -86,7 +86,7 @@ public class ClientController {
 
     // 5) Изменение адреса клиента
     @Operation(summary = "Обновить адрес у клиента")
-    @PatchMapping("/updateAddress/{id}")
+    @PatchMapping("/update-address/{id}")
     public ResponseEntity<?> updateClientAddress(
             @PathVariable UUID id,
             @Valid @RequestBody AddressDTO addressDto) {

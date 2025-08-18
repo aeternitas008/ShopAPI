@@ -1,6 +1,7 @@
 package com.example.shop.dto;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +16,7 @@ public class ProductDTO {
 
     int price;
 
-    SupplierDTO supplierDto;
+    private UUID supplierId;
 
     ImageDTO imageDto;
 

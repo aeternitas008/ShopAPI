@@ -28,7 +28,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/supplier")
+@RequestMapping("/api/v1/supplier")
 @RequiredArgsConstructor
 public class SupplierController {
 
@@ -58,7 +58,7 @@ public class SupplierController {
 
     // 3) Удаление поставщика
     @Operation(summary = "Удаление поставщика", description = "Удаление поставщика по id")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteSupplier(@PathVariable UUID id) {
         supplierService.deleteSupplier(id);
         return ResponseEntity.ok().build();
@@ -75,9 +75,9 @@ public class SupplierController {
         return ResponseEntity.ok(suppliers);
     }
 
-    // 5) Получение поставщика по id
+    // 5) Поиск поставщика по id
     @GetMapping("/{id}")
-    @Operation(summary = "Найти поставщик по id")
+    @Operation(summary = "Поиск поставщика по id")
     public ResponseEntity<?> getSupplier(
             @PathVariable UUID id) {
 

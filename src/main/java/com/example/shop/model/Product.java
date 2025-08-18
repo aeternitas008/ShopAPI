@@ -57,7 +57,7 @@ public class Product {
     @NotNull(message = "Изображение обязательно")
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "image_id", nullable = false, columnDefinition = "uuid")
-    private Image image;
+    private Images image;
 
     @PositiveOrZero(message = "Количество должно быть неотрицательным")
     @Column(name = "available_quantity", nullable = false)
