@@ -1,13 +1,19 @@
+// src/main/java/com/example/shop/exception/BadRequestException.java
 package com.example.shop.exception;
 
 import java.util.UUID;
 
-public class InsufficientStockException extends CustomException {
-    private final UUID productId;
-    private final long available;
-    private final long requested;
+public class BadRequestException extends RuntimeException {
 
-    public InsufficientStockException(UUID productId, long available, long requested) {
+    private UUID productId;
+    private long available;
+    private long requested;
+
+    public BadRequestException(String message) {
+        super(message);
+    }
+
+    public BadRequestException(UUID productId, long available, long requested) {
         super(String.format(
                 "Insufficient stock for product %s: available %d, requested %d",
                 productId, available, requested));
@@ -16,7 +22,6 @@ public class InsufficientStockException extends CustomException {
         this.requested = requested;
     }
 
-    // Геттеры
     public UUID getProductId() {
         return productId;
     }

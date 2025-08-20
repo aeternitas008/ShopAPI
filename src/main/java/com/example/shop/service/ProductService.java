@@ -7,7 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.shop.dto.ProductDTO;
-import com.example.shop.exception.InsufficientStockException;
+import com.example.shop.exception.BadRequestException;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.ProductMapper;
 import com.example.shop.model.Images;
 import com.example.shop.model.Product;
@@ -41,7 +42,7 @@ public class ProductService {
         Product product = findById(productId);
         long currentQuantity = product.getAvailableQuantity();
         if (currentQuantity < requsted) {
-            throw new InsufficientStockException(
+            throw new BadRequestException(
                     productId, currentQuantity, requsted);
         }
         product.setAvailableQuantity(product.getAvailableQuantity() - requsted);
@@ -76,7 +77,29 @@ public class ProductService {
         return findById(id).getImage();
     }
 
-    public boolean existsById(UUID id) {
-        return productRepository.existsById(id);
+    public Product getProductById(UUID id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> NotFoundException.forProduct(id));
     }
+
+    public void existsById(UUID id) {
+        if (!productRepository.existsById(id)) {
+            throw NotFoundException.forProduct(id);
+        }
+    }
+
+    public Product decreaseAmountProductValidated(UUID id, long count) {
+        Product product = getProductById(id);
+
+        if (count <= 0) {
+            throw new BadRequestException("Количество должно быть больше 0");
+        }
+
+        if (product.getAvailableQuantity() < count) {
+            throw new BadRequestException("Недостаточно товара в наличии");
+        }
+
+        return decreaseAmountProduct(id, count);
+    }
+
 }

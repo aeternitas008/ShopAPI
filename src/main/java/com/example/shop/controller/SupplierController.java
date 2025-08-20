@@ -2,10 +2,8 @@ package com.example.shop.controller;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,29 +35,26 @@ public class SupplierController {
     // 1) Добавление поставщика
     @PostMapping("/add")
     @Operation(summary = "Добавление поставщика", description = "Создает нового поставщика в системе")
-    public ResponseEntity<?> addSupplier(@Valid @RequestBody SupplierDTO dto, BindingResult result) {
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(getErrorMessages(result));
-        }
+    public ResponseEntity<Supplier> addSupplier(@Valid @RequestBody SupplierDTO dto) {
         return ResponseEntity.ok(supplierService.addSupplier(dto));
     }
 
     // 2) Изменение адреса поставщика
     @Operation(summary = "Обновить адрес у поставщика")
     @PatchMapping("/updateAddress/{id}")
-    public ResponseEntity<?> updateSupplierAddress(
+    public ResponseEntity<Supplier> updateSupplierAddress(
             @PathVariable UUID id,
             @Valid @RequestBody AddressDTO addressDto) {
-        if (!supplierService.existsById(id)) {
-            return ResponseEntity.badRequest().body("Клиент с ID " + id + " не найден");
-        }
+
+        supplierService.existsById(id);
         return ResponseEntity.ok(supplierService.updateSupplierAddress(id, addressDto));
     }
 
     // 3) Удаление поставщика
     @Operation(summary = "Удаление поставщика", description = "Удаление поставщика по id")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSupplier(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteSupplier(@PathVariable UUID id) {
+        supplierService.existsById(id);
         supplierService.deleteSupplier(id);
         return ResponseEntity.ok().build();
     }
@@ -67,27 +62,19 @@ public class SupplierController {
     // 4) Получение всех поставщиков (с пагинацией)
     @GetMapping("/all")
     @Operation(summary = "Получить всех поставщиков")
-    public ResponseEntity<?> getAllSuppliers(
-            @RequestParam @Positive Integer limit,
-            @RequestParam @PositiveOrZero Integer offset) {
+    public ResponseEntity<List<Supplier>> getAllSuppliers(
+            @RequestParam(required = false) @Positive Integer limit,
+            @RequestParam(required = false) @PositiveOrZero Integer offset) {
 
-        List<Supplier> suppliers = supplierService.getAll(limit, offset);
+        List<Supplier> suppliers = supplierService.getAllSuppliersValidated(limit, offset);
         return ResponseEntity.ok(suppliers);
     }
 
     // 5) Поиск поставщика по id
     @GetMapping("/{id}")
     @Operation(summary = "Поиск поставщика по id")
-    public ResponseEntity<?> getSupplier(
-            @PathVariable UUID id) {
-
-        return ResponseEntity.ok(supplierService.getById(id));
-    }
-
-    // Вспомогательный метод для форматирования ошибок валидации
-    private List<String> getErrorMessages(BindingResult result) {
-        return result.getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.toList());
+    public ResponseEntity<Supplier> getSupplier(@PathVariable UUID id) {
+        Supplier supplier = supplierService.getSupplierById(id);
+        return ResponseEntity.ok(supplier);
     }
 }

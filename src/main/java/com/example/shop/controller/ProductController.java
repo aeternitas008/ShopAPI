@@ -2,19 +2,20 @@ package com.example.shop.controller;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.shop.dto.ProductDTO;
+import com.example.shop.exception.NotFoundException;
+import com.example.shop.model.Product;
 import com.example.shop.service.ProductService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,60 +30,49 @@ public class ProductController {
 
     private final ProductService productService;
 
-    // 1) Добавление клиента
+    // 1) Добавление продукта
     @Operation(summary = "Добавление продукта", description = "Добавляет новый продукт")
     @PostMapping("/add")
-    public ResponseEntity<?> addProduct(@Valid @RequestBody ProductDTO productDto, BindingResult result) {
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(getErrorMessages(result));
-        }
-
+    public ResponseEntity<Product> addProduct(@Valid @RequestBody ProductDTO productDto) {
         return ResponseEntity.ok(productService.addProduct(productDto));
     }
 
     // 2) Уменьшение количества товара
     @Operation(summary = "Уменьшение количества товара")
     @PostMapping("/decrease/{id}")
-    public ResponseEntity<?> reductionOfProduct(@PathVariable UUID productId, @PathVariable @Positive long count) {
-        if (!productService.existsById(productId)) {
-            return ResponseEntity.badRequest().body("Клиент с ID " + productId + " не найден");
-        }
+    public ResponseEntity<Product> reductionOfProduct(
+            @PathVariable UUID id,
+            @RequestParam @Positive long count) {
 
-        return ResponseEntity.ok(productService.decreaseAmountProduct(productId, count));
+        Product updatedProduct = productService.decreaseAmountProductValidated(id, count);
+        return ResponseEntity.ok(updatedProduct);
     }
 
     // 3) Поиск товара по id
     @Operation(summary = "Поиск товара по id")
     @GetMapping("/{id}")
-    public ResponseEntity<?> findProductById(@PathVariable UUID productId) {
-        if (!productService.existsById(productId)) {
-            return ResponseEntity.badRequest().body("Клиент с ID " + productId + " не найден");
-        }
-        return ResponseEntity.ok(productService.findById(productId));
+    public ResponseEntity<Product> findProductById(@PathVariable UUID id) {
+        Product product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
     }
 
     // 4) Поиск всех товаров
     @Operation(summary = "Поиск всех товаров")
     @GetMapping("/all")
-    public ResponseEntity<?> findAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<List<Product>> findAllProducts() {
+        List<Product> products = productService.getAllProducts();
+        if (products.isEmpty()) {
+            throw new NotFoundException("Товары не найдены");
+        }
+        return ResponseEntity.ok(products);
     }
 
     // 5) Удаление товара
     @Operation(summary = "Удаление товара")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable UUID productId) {
-        if (!productService.existsById(productId)) {
-            return ResponseEntity.badRequest().body("Клиент с ID " + productId + " не найден");
-        }
-        productService.deleteProduct(productId);
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
+        productService.existsById(id);
+        productService.deleteProduct(id);
         return ResponseEntity.ok().build();
-    }
-
-    // Вспомогательный метод для форматирования ошибок валидации
-    private List<String> getErrorMessages(BindingResult result) {
-        return result.getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.toList());
     }
 }

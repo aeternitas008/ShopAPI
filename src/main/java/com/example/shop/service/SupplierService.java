@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.SupplierDTO;
+import com.example.shop.exception.BadRequestException;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.exception.SupplierNotFoundException;
 import com.example.shop.mapper.AddressMapper;
 import com.example.shop.mapper.SupplierMapper;
@@ -71,7 +73,30 @@ public class SupplierService {
         return supplierRepository.save(supplier);
     }
 
-    public boolean existsById(UUID id) {
-        return supplierRepository.existsById(id);
+    public Supplier getSupplierById(UUID id) {
+        return supplierRepository.findById(id)
+                .orElseThrow(() -> NotFoundException.forSupplier(id));
+    }
+
+    public void existsById(UUID id) {
+        if (!supplierRepository.existsById(id)) {
+            throw NotFoundException.forSupplier(id);
+        }
+    }
+
+    public List<Supplier> getAllSuppliersValidated(Integer limit, Integer offset) {
+        if (limit != null && limit <= 0) {
+            throw new BadRequestException("Limit должен быть > 0");
+        }
+        if (offset != null && offset < 0) {
+            throw new BadRequestException("Offset должен быть >= 0");
+        }
+
+        List<Supplier> suppliers = getAll(limit, offset);
+        if (suppliers.isEmpty()) {
+            throw new NotFoundException("Поставщики не найдены");
+        }
+
+        return suppliers;
     }
 }

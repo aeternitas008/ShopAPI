@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.shop.dto.ImageDTO;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.model.Images;
 import com.example.shop.service.ImageService;
 
@@ -38,38 +39,30 @@ public class ImageController {
     @Operation(summary = "Добавление изображения")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Изображение успешно добавлено"),
-            @ApiResponse(responseCode = "400", description = "Неверные входные данные")
+            @ApiResponse(responseCode = "400", description = "Неверные входные данные"),
+            @ApiResponse(responseCode = "404", description = "Товар не найден")
     })
-    public ResponseEntity<?> addImage(
+    public ResponseEntity<UUID> addImage(
             @RequestParam UUID productId,
             @RequestBody ImageDTO imageDto) {
-        try {
 
-            Images image = imageService.updateImageProduct(productId, imageDto);
-
-            return ResponseEntity.ok(image.getId());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Images image = imageService.updateImageProduct(productId, imageDto);
+        return ResponseEntity.ok(image.getId());
     }
 
     // 2) Изменение изображения
     @PatchMapping("/{id}")
     @Operation(summary = "Обновление изображения")
-    public ResponseEntity<?> updateImage(@PathVariable UUID id, @RequestBody ImageDTO imageDto) {
-        if (!imageService.existsById(id)) {
-            return ResponseEntity.badRequest().body("Изображение с ID " + id + " не найдено");
-        }
+    public ResponseEntity<Images> updateImage(@PathVariable UUID id, @RequestBody ImageDTO imageDto) {
+        imageService.existsById(id);
         return ResponseEntity.ok(imageService.updateImage(id, imageDto));
     }
 
     // 3) Удаление изображения
     @DeleteMapping("/{id}")
     @Operation(summary = "Удаление изображения", description = "Удаляет изображение по ID")
-    public ResponseEntity<?> deleteImage(@PathVariable UUID id) {
-        if (!imageService.existsById(id)) {
-            return ResponseEntity.badRequest().body("Изображение с ID " + id + " не найдено");
-        }
+    public ResponseEntity<Void> deleteImage(@PathVariable UUID id) {
+        imageService.existsById(id);
         imageService.deleteImageById(id);
         return ResponseEntity.ok().build();
     }
@@ -77,8 +70,11 @@ public class ImageController {
     // 4) Получение изображения товара
     @GetMapping("/by-product/{productId}")
     @Operation(summary = "Получение изображений товара", description = "Возвращает все изображения для указанного товара")
-    public ResponseEntity<?> getImagesByProduct(@PathVariable UUID productId) {
+    public ResponseEntity<Images> getImagesByProduct(@PathVariable UUID productId) {
         Images image = imageService.findImageProduct(productId);
+        if (image == null) {
+            throw new NotFoundException("Изображение для товара с ID " + productId + " не найдено");
+        }
         return ResponseEntity.ok(image);
     }
 
@@ -87,16 +83,12 @@ public class ImageController {
     @Operation(summary = "Получение изображения", description = "Возвращает изображение по его ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Изображение найдено", content = @Content(mediaType = "image/*")),
-            @ApiResponse(responseCode = "404", description = "Изображение не найдено")
+            @ApiResponse(responseCode = "404", description = "Изображение не найдено"),
+            @ApiResponse(responseCode = "400", description = "Изображение не содержит данных")
     })
-    public ResponseEntity<?> getImageById(@PathVariable UUID id) {
+    public ResponseEntity<byte[]> getImageById(@PathVariable UUID id) {
+        Images image = imageService.getImageById(id);
 
-        Images image = imageService.getById(id);
-        if (image == null || image.getImage() == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // Определяем Content-Disposition для автоматической загрузки
         ContentDisposition contentDisposition = ContentDisposition.builder("attachment")
                 .filename("image_" + id.toString() + ".jpg")
                 .build();

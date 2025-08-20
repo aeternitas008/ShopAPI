@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.ClientDTO;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.AddressMapper;
 import com.example.shop.mapper.ClientMapper;
 import com.example.shop.model.Client;
@@ -61,7 +62,14 @@ public class ClientService {
         return clientRepository.save(client);
     }
 
-    public boolean existsById(UUID id) {
-        return clientRepository.existsById(id);
+    public Client getClientById(UUID id) {
+        return clientRepository.findById(id)
+                .orElseThrow(() -> NotFoundException.forClient(id));
+    }
+
+    public void existsById(UUID id) {
+        if (!clientRepository.existsById(id)) {
+            throw NotFoundException.forClient(id);
+        }
     }
 }

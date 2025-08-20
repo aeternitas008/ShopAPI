@@ -67,13 +67,13 @@ public class ApiWelcomeController {
                             <a href='/swagger-ui/index.html#/client-controller'>/api/clients</a> - управление клиентами
                         </div>
                         <div class="endpoint">
-                            <a href='/swagger-ui/index.html#//product-controller'>/api/product</a> - управление продуктами
+                            <a href='/swagger-ui/index.html#/product-controller'>/api/product</a> - управление продуктами
                         </div>
                         <div class="endpoint">
-                            <a href='/swagger-ui/index.html#//image-controller'>/api/image</a> - работа с изображениями
+                            <a href='/swagger-ui/index.html#/image-controller'>/api/image</a> - работа с изображениями
                         </div>
                         <div class="endpoint">
-                            <a href='/swagger-ui/index.html#//supplier-controller'>/api/supplier</a> - управление поставщиками
+                            <a href='/swagger-ui/index.html#/supplier-controller'>/api/supplier</a> - управление поставщиками
                         </div>
                     </div>
 

@@ -5,6 +5,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.example.shop.dto.ImageDTO;
+import com.example.shop.exception.BadRequestException;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.ImageMapper;
 import com.example.shop.model.Images;
 import com.example.shop.repository.ImageRepository;
@@ -49,12 +51,30 @@ public class ImageService {
         return productService.getImage(productId);
     }
 
-    // 5) Поиск по имени и фамилии
-    public Images getById(UUID id) {
-        return imageRepository.findById(id).orElseThrow();
+    public Images getImageById(UUID id) {
+        Images image = imageRepository.findById(id)
+                .orElseThrow(() -> NotFoundException.forImage(id));
+
+        if (image.getImage() == null) {
+            throw new BadRequestException("Изображение с ID " + id + " не содержит данных");
+        }
+
+        return image;
     }
 
-    public boolean existsById(UUID id) {
-        return imageRepository.existsById(id);
+    public void existsById(UUID id) {
+        if (!imageRepository.existsById(id)) {
+            throw NotFoundException.forImage(id);
+        }
+    }
+
+    public void validateImageHasData(UUID id) {
+        Images image = imageRepository.findById(id)
+                .orElseThrow(() -> NotFoundException.forImage(id));
+
+        if (image.getImage() == null) {
+            throw new BadRequestException("Изображение с ID " + id + " не содержит данных");
+        }
+
     }
 }

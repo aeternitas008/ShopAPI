@@ -16,7 +16,6 @@ public class AddressService {
 
     public Address addAddress(AddressDTO addressDTO) {
         Address address = new Address();
-        // address.setId(addressDTO.getId());
         address.setCountry(addressDTO.getCountry());
         address.setCity(addressDTO.getCity());
         address.setStreet(addressDTO.getHouse());
