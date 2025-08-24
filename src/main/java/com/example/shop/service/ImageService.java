@@ -62,10 +62,8 @@ public class ImageService {
         return image;
     }
 
-    public void existsById(UUID id) {
-        if (!imageRepository.existsById(id)) {
-            throw NotFoundException.forImage(id);
-        }
+    public boolean existsById(UUID id) {
+        return imageRepository.existsById(id);
     }
 
     public void validateImageHasData(UUID id) {

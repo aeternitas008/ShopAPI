@@ -46,7 +46,7 @@ class ImageControllerTest {
 
     private final UUID existingImageId = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private final UUID nonExistingImageId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
-    private final UUID existingProductId = UUID.fromString("b2c3d4e5-f6g7-8901-bcde-f23456789012");
+    private final UUID existingProductId = UUID.fromString("b2c3d4e5-f6b7-8901-bcde-f23456789012");
 
     // Вспомогательные методы для создания тестовых данных
     private ImageDTO createValidImageDTO() {
@@ -143,10 +143,11 @@ class ImageControllerTest {
 
     @Test
     void updateImage_WithNonExistingId_Returns400() throws Exception {
+        // given
         ImageDTO imageDto = createValidImageDTO();
+        when(imageService.existsById(nonExistingImageId)).thenReturn(false);
 
-        doNothing().when(imageService).existsById(nonExistingImageId);
-
+        // when & then
         mockMvc.perform(patch("/api/v1/image/{id}", nonExistingImageId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(imageDto)))
@@ -196,13 +197,13 @@ class ImageControllerTest {
     }
 
     @Test
-    void getImagesByProduct_WithNonExistingProduct_Returns200() throws Exception {
+    void getImagesByProduct_WithNonExistingProduct_Returns404() throws Exception {
         // given
         when(imageService.findImageProduct(nonExistingImageId)).thenReturn(null);
 
         // when & then
         mockMvc.perform(get("/api/v1/image/by-product/{productId}", nonExistingImageId))
-                .andExpect(status().isOk());
+                .andExpect(status().isNotFound());
 
         verify(imageService, times(1)).findImageProduct(nonExistingImageId);
     }

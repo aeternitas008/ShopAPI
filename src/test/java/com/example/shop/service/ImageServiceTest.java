@@ -45,7 +45,7 @@ class ImageServiceTest {
 
     private final UUID existingImageId = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private final UUID nonExistingImageId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
-    private final UUID productId = UUID.fromString("b2c3d4e5-f6g7-8901-bcde-f23456789012");
+    private final UUID productId = UUID.fromString("b2c3d4e5-f6b7-8901-bcde-f23456789012");
 
     private ImageDTO createValidImageDTO() {
         ImageDTO dto = new ImageDTO();

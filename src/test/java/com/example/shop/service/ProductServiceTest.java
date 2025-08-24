@@ -49,7 +49,7 @@ class ProductServiceTest {
 
     private final UUID existingProductId = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private final UUID nonExistingProductId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
-    private final UUID supplierId = UUID.fromString("c3d4e5f6-g7h8-9012-cdef-345678901234");
+    private final UUID supplierId = UUID.fromString("c3d4e5f6-f7b8-9012-cdef-345678901234");
 
     private ProductDTO createValidProductDTO() {
         ProductDTO dto = new ProductDTO();

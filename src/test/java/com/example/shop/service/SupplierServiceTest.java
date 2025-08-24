@@ -195,7 +195,7 @@ class SupplierServiceTest {
         // given
         List<Supplier> suppliers = List.of(createSupplierEntity());
 
-        when(supplierRepository.findAll()).thenReturn(suppliers);
+        when(supplierRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(suppliers));
 
         // when
         List<Supplier> result = supplierService.getAll(null, null);
@@ -204,8 +204,8 @@ class SupplierServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
 
-        verify(supplierRepository, times(1)).findAll();
-        verify(supplierRepository, never()).findAll(any(Pageable.class));
+        verify(supplierRepository, times(1)).findAll(Pageable.unpaged());
+        verify(supplierRepository, never()).findAll();
     }
 
     @Test
@@ -324,10 +324,11 @@ class SupplierServiceTest {
         int offset = 0;
         List<Supplier> suppliers = List.of(createSupplierEntity());
 
-        when(supplierService.getAll(limit, offset)).thenReturn(suppliers);
+        Pageable pageable = PageRequest.of(offset, limit);
+        when(supplierRepository.findAll(pageable)).thenReturn(new PageImpl<>(suppliers));
 
         // when
-        List<Supplier> result = supplierService.getAllSuppliersValidated(limit, offset);
+        List<Supplier> result = supplierService.getAll(limit, offset);
 
         // then
         assertNotNull(result);
@@ -344,7 +345,7 @@ class SupplierServiceTest {
 
         // when & then
         assertThrows(BadRequestException.class, () -> {
-            supplierService.getAllSuppliersValidated(limit, offset);
+            supplierService.getAll(limit, offset);
         });
 
         verify(supplierRepository, never()).findAll(any(Pageable.class));
@@ -352,13 +353,11 @@ class SupplierServiceTest {
 
     @Test
     void getAllSuppliersValidated_WithInvalidOffset_ShouldThrowBadRequestException() {
-        // given
         int limit = 10;
         int offset = -1;
 
-        // when & then
         assertThrows(BadRequestException.class, () -> {
-            supplierService.getAllSuppliersValidated(limit, offset);
+            supplierService.getAll(limit, offset);
         });
 
         verify(supplierRepository, never()).findAll(any(Pageable.class));
@@ -369,12 +368,14 @@ class SupplierServiceTest {
         // given
         int limit = 10;
         int offset = 0;
+        List<Supplier> suppliers = List.of(createSupplierEntity());
 
-        when(supplierService.getAll(limit, offset)).thenReturn(List.of());
+        Pageable pageable = PageRequest.of(offset, limit);
+        when(supplierRepository.findAll(pageable)).thenReturn(new PageImpl<>(suppliers));
 
         // when & then
         assertThrows(NotFoundException.class, () -> {
-            supplierService.getAllSuppliersValidated(limit, offset);
+            supplierService.getAll(limit, offset);
         });
 
         verify(supplierRepository, times(1)).findAll(any(Pageable.class));

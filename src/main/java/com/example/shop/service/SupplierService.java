@@ -3,14 +3,12 @@ package com.example.shop.service;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.SupplierDTO;
-import com.example.shop.exception.BadRequestException;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.exception.SupplierNotFoundException;
 import com.example.shop.mapper.AddressMapper;
@@ -51,13 +49,11 @@ public class SupplierService {
 
     // 4) Получение всех поставщиков
     public List<Supplier> getAll(Integer limit, Integer offset) {
-        if (limit != null && offset != null) {
-            Pageable pageable = PageRequest.of(offset, limit);
-            Page<Supplier> page = supplierRepository.findAll(pageable);
-            return page.getContent();
-        }
-        // @TODO null ???
-        return supplierRepository.findAll();
+        Pageable pageable = (limit == null && offset == null)
+                ? Pageable.unpaged()
+                : PageRequest.of(offset != null ? offset : 0, limit != null ? limit : 10);
+
+        return supplierRepository.findAll(pageable).getContent();
     }
 
     // 5) Получение поставщика по id
@@ -84,19 +80,4 @@ public class SupplierService {
         }
     }
 
-    public List<Supplier> getAllSuppliersValidated(Integer limit, Integer offset) {
-        if (limit != null && limit <= 0) {
-            throw new BadRequestException("Limit должен быть > 0");
-        }
-        if (offset != null && offset < 0) {
-            throw new BadRequestException("Offset должен быть >= 0");
-        }
-
-        List<Supplier> suppliers = getAll(limit, offset);
-        if (suppliers.isEmpty()) {
-            throw new NotFoundException("Поставщики не найдены");
-        }
-
-        return suppliers;
-    }
 }

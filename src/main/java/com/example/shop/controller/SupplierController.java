@@ -66,7 +66,7 @@ public class SupplierController {
             @RequestParam(required = false) @Positive Integer limit,
             @RequestParam(required = false) @PositiveOrZero Integer offset) {
 
-        List<Supplier> suppliers = supplierService.getAllSuppliersValidated(limit, offset);
+        List<Supplier> suppliers = supplierService.getAll(limit, offset);
         return ResponseEntity.ok(suppliers);
     }
 

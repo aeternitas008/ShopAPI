@@ -173,7 +173,7 @@ class SupplierControllerTest {
         int limit = 10;
         int offset = 0;
 
-        when(supplierService.getAllSuppliersValidated(limit, offset)).thenReturn(suppliers);
+        when(supplierService.getAll(limit, offset)).thenReturn(suppliers);
 
         // when & then
         mockMvc.perform(get("/api/v1/supplier/all")
@@ -182,7 +182,7 @@ class SupplierControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
 
-        verify(supplierService, times(1)).getAllSuppliersValidated(limit, offset);
+        verify(supplierService, times(1)).getAll(limit, offset);
     }
 
     @Test
@@ -190,20 +190,20 @@ class SupplierControllerTest {
         // given
         List<Supplier> suppliers = List.of(createSupplierEntity());
 
-        when(supplierService.getAllSuppliersValidated(null, null)).thenReturn(suppliers);
+        when(supplierService.getAll(null, null)).thenReturn(suppliers);
 
         // when & then
         mockMvc.perform(get("/api/v1/supplier/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
 
-        verify(supplierService, times(1)).getAllSuppliersValidated(null, null);
+        verify(supplierService, times(1)).getAll(null, null);
     }
 
     @Test
     void getAllSuppliers_WithInvalidLimit_Returns400() throws Exception {
         // given
-        when(supplierService.getAllSuppliersValidated(-1, 0))
+        when(supplierService.getAll(-1, 0))
                 .thenThrow(new IllegalArgumentException("Limit должен быть > 0"));
 
         // when & then
@@ -212,17 +212,15 @@ class SupplierControllerTest {
                 .param("offset", "0"))
                 .andExpect(status().isBadRequest());
 
-        verify(supplierService, times(1)).getAllSuppliersValidated(-1, 0);
+        verify(supplierService, times(1)).getAll(-1, 0);
     }
 
     @Test
     void getSupplier_WithExistingSupplier_Returns200() throws Exception {
-        // given
         Supplier supplier = createSupplierEntity();
 
         when(supplierService.getSupplierById(existingSupplierId)).thenReturn(supplier);
 
-        // when & then
         mockMvc.perform(get("/api/v1/supplier/{id}", existingSupplierId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(existingSupplierId.toString()));
