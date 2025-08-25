@@ -36,7 +36,7 @@ public class ImageService {
 
     // 2) Обновить картинку по id
     public Images updateImage(UUID id, ImageDTO imageDTO) {
-        Images image = imageRepository.findById(id).orElseThrow();
+        Images image = findById(id);
         image.setImage(imageDTO.getImage());
         return imageRepository.save(image);
     }
@@ -52,10 +52,9 @@ public class ImageService {
     }
 
     public Images getImageById(UUID id) {
-        Images image = imageRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.forImage(id));
+        Images image = findById(id);
 
-        if (image.getImage() == null) {
+        if (image == null || image.getImage() == null) {
             throw new BadRequestException("Изображение с ID " + id + " не содержит данных");
         }
 
@@ -66,9 +65,13 @@ public class ImageService {
         return imageRepository.existsById(id);
     }
 
-    public void validateImageHasData(UUID id) {
-        Images image = imageRepository.findById(id)
+    private Images findById(UUID id) {
+        return imageRepository.findById(id)
                 .orElseThrow(() -> NotFoundException.forImage(id));
+    }
+
+    public void validateImageHasData(UUID id) {
+        Images image = findById(id);
 
         if (image.getImage() == null) {
             throw new BadRequestException("Изображение с ID " + id + " не содержит данных");

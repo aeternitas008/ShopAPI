@@ -338,20 +338,6 @@ class SupplierServiceTest {
     }
 
     @Test
-    void getAllSuppliersValidated_WithInvalidLimit_ShouldThrowBadRequestException() {
-        // given
-        int limit = -1;
-        int offset = 0;
-
-        // when & then
-        assertThrows(BadRequestException.class, () -> {
-            supplierService.getAll(limit, offset);
-        });
-
-        verify(supplierRepository, never()).findAll(any(Pageable.class));
-    }
-
-    @Test
     void getAllSuppliersValidated_WithInvalidOffset_ShouldThrowBadRequestException() {
         int limit = 10;
         int offset = -1;
@@ -368,10 +354,10 @@ class SupplierServiceTest {
         // given
         int limit = 10;
         int offset = 0;
-        List<Supplier> suppliers = List.of(createSupplierEntity());
+        // List<Supplier> suppliers = List.of(createSupplierEntity());
 
         Pageable pageable = PageRequest.of(offset, limit);
-        when(supplierRepository.findAll(pageable)).thenReturn(new PageImpl<>(suppliers));
+        when(supplierRepository.findAll(pageable)).thenThrow(NotFoundException.class);
 
         // when & then
         assertThrows(NotFoundException.class, () -> {

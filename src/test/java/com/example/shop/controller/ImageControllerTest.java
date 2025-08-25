@@ -27,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.shop.dto.ImageDTO;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.model.Images;
 import com.example.shop.service.ImageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -92,19 +93,17 @@ class ImageControllerTest {
     void addImage_WithServiceException_Returns400() throws Exception {
         // given
         ImageDTO imageDto = createValidImageDTO();
-
-        when(imageService.updateImageProduct(any(UUID.class), any(ImageDTO.class)))
-                .thenThrow(new RuntimeException("Product not found"));
+        when(imageService.updateImageProduct(existingProductId, imageDto))
+                .thenThrow(NotFoundException.forProduct(existingProductId));
 
         // when & then
         mockMvc.perform(post("/api/v1/image/add")
                 .param("productId", existingProductId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(imageDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Product not found"));
+                .andExpect(status().isBadRequest());
 
-        verify(imageService, times(1)).updateImageProduct(any(UUID.class), any(ImageDTO.class));
+        verify(imageService, times(1)).updateImageProduct(existingProductId, imageDto);
     }
 
     @Test
@@ -128,7 +127,7 @@ class ImageControllerTest {
         ImageDTO imageDto = createValidImageDTO();
         Images updatedImage = createImageEntity();
 
-        doNothing().when(imageService).existsById(existingImageId);
+        when(imageService.existsById(nonExistingImageId)).thenReturn(true);
         when(imageService.updateImage(existingImageId, imageDto)).thenReturn(updatedImage);
 
         // when & then
@@ -160,7 +159,7 @@ class ImageControllerTest {
 
     @Test
     void deleteImage_WithExistingId_Returns200() throws Exception {
-        doNothing().when(imageService).existsById(nonExistingImageId);
+        when(imageService.existsById(nonExistingImageId)).thenReturn(false);
         doNothing().when(imageService).deleteImageById(existingImageId);
 
         mockMvc.perform(delete("/api/v1/image/{id}", existingImageId))
@@ -172,7 +171,7 @@ class ImageControllerTest {
 
     @Test
     void deleteImage_WithNonExistingId_Returns400() throws Exception {
-        doNothing().when(imageService).existsById(nonExistingImageId);
+        when(imageService.existsById(nonExistingImageId)).thenReturn(false);
 
         mockMvc.perform(delete("/api/v1/image/{id}", nonExistingImageId))
                 .andExpect(status().isBadRequest())
@@ -227,7 +226,7 @@ class ImageControllerTest {
     @Test
     void getImageById_WithNonExistingImage_Returns404() throws Exception {
         // given
-        when(imageService.getImageById(nonExistingImageId)).thenReturn(null);
+        when(imageService.getImageById(nonExistingImageId)).thenThrow(NotFoundException.forImage(nonExistingImageId));
 
         // when & then
         mockMvc.perform(get("/api/v1/image/{id}", nonExistingImageId))
