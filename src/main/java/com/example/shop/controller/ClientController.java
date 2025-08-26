@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.ClientDTO;
-import com.example.shop.exception.NotFoundException;
+import com.example.shop.exception.BadRequestException;
 import com.example.shop.model.Client;
 import com.example.shop.service.ClientService;
 
@@ -35,7 +35,7 @@ public class ClientController {
     // 1) Добавление клиента
     @PostMapping("/add")
     @Operation(summary = "Добавление клиента", description = "Создает нового клиента в системе")
-    public ResponseEntity<Client> addClient(@Valid @RequestBody ClientDTO dto) {
+    public ResponseEntity<Client> addClient(@RequestBody @Valid ClientDTO dto) {
         Client createdClient = clientService.addClient(dto);
         return ResponseEntity.ok(createdClient);
     }
@@ -53,13 +53,11 @@ public class ClientController {
     @GetMapping("/search")
     @Operation(summary = "Поиск клиента по ФИ", description = "Поиск клиента по имени и фамилии")
     public ResponseEntity<List<Client>> getClientsByNameAndSurname(
-            @RequestParam @NotBlank String name,
-            @RequestParam @NotBlank String surname) {
+            @RequestParam @Valid @NotBlank String name,
+            @RequestParam @Valid @NotBlank String surname) {
 
         List<Client> clients = clientService.getClientsByNameAndSurname(name, surname);
-        if (clients.isEmpty()) {
-            throw new NotFoundException("Клиенты с именем " + name + " и фамилией " + surname + " не найдены");
-        }
+
         return ResponseEntity.ok(clients);
     }
 
@@ -67,14 +65,14 @@ public class ClientController {
     @GetMapping("/all")
     @Operation(summary = "Получить всех клиентов")
     public ResponseEntity<List<Client>> getAllClients(
-            @RequestParam(required = false) Integer limit,
-            @RequestParam(required = false) Integer offset) {
+            @RequestParam(required = false) @Valid Integer limit,
+            @RequestParam(required = false) @Valid Integer offset) {
 
         if (limit != null && limit <= 0) {
-            throw new IllegalArgumentException("Limit должен быть > 0");
+            throw new BadRequestException("Limit должен быть > 0");
         }
         if (offset != null && offset < 0) {
-            throw new IllegalArgumentException("Offset должен быть >= 0");
+            throw new BadRequestException("Offset должен быть >= 0");
         }
 
         List<Client> clients = clientService.getAllClients(limit, offset);
@@ -86,9 +84,8 @@ public class ClientController {
     @PatchMapping("/update-address/{id}")
     public ResponseEntity<Client> updateClientAddress(
             @PathVariable UUID id,
-            @Valid @RequestBody AddressDTO addressDto) {
+            @RequestBody @Valid AddressDTO addressDto) {
 
-        clientService.existsById(id);
         return ResponseEntity.ok(clientService.updateClientAddress(id, addressDto));
     }
 
@@ -96,7 +93,7 @@ public class ClientController {
     @GetMapping("/{id}")
     @Operation(summary = "Получение клиента по ID")
     public ResponseEntity<Client> getClientById(@PathVariable UUID id) {
-        Client client = clientService.getClientById(id);
+        Client client = clientService.findById(id);
         return ResponseEntity.ok(client);
     }
 }

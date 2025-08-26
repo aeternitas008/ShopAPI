@@ -55,14 +55,14 @@ public class ClientService {
 
     // 5) Обновление адреса клиента
     public Client updateClientAddress(UUID id, AddressDTO addressDTO) {
-        Client client = clientRepository.findById(id).orElseThrow();
+        Client client = findById(id);
 
         client.setAddress(addressMapper.toEntity(addressDTO));
 
         return clientRepository.save(client);
     }
 
-    public Client getClientById(UUID id) {
+    public Client findById(UUID id) {
         return clientRepository.findById(id)
                 .orElseThrow(() -> NotFoundException.forClient(id));
     }

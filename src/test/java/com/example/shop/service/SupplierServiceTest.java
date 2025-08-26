@@ -216,7 +216,7 @@ class SupplierServiceTest {
         when(supplierRepository.findById(existingSupplierId)).thenReturn(Optional.of(supplier));
 
         // when
-        Supplier result = supplierService.getById(existingSupplierId);
+        Supplier result = supplierService.findById(existingSupplierId);
 
         // then
         assertNotNull(result);
@@ -232,7 +232,7 @@ class SupplierServiceTest {
 
         // when & then
         assertThrows(Exception.class, () -> {
-            supplierService.getById(nonExistingSupplierId);
+            supplierService.findById(nonExistingSupplierId);
         });
 
         verify(supplierRepository, times(1)).findById(nonExistingSupplierId);
@@ -269,7 +269,7 @@ class SupplierServiceTest {
         when(supplierRepository.findById(existingSupplierId)).thenReturn(Optional.of(supplier));
 
         // when
-        Supplier result = supplierService.getSupplierById(existingSupplierId);
+        Supplier result = supplierService.findById(existingSupplierId);
 
         // then
         assertNotNull(result);
@@ -285,7 +285,7 @@ class SupplierServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class, () -> {
-            supplierService.getSupplierById(nonExistingSupplierId);
+            supplierService.findById(nonExistingSupplierId);
         });
 
         verify(supplierRepository, times(1)).findById(nonExistingSupplierId);

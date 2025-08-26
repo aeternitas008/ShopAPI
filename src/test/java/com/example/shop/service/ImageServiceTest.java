@@ -26,6 +26,7 @@ import com.example.shop.exception.BadRequestException;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.ImageMapper;
 import com.example.shop.model.Images;
+import com.example.shop.model.Product;
 import com.example.shop.repository.ImageRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,7 +97,7 @@ class ImageServiceTest {
 
         when(imageMapper.toEntity(imageDTO)).thenReturn(imageEntity);
         when(imageRepository.save(imageEntity)).thenReturn(imageEntity);
-        doNothing().when(productService).updateImage(productId, imageEntity);
+        when(productService.updateImage(productId, imageEntity)).thenReturn(any(Product.class));
 
         // when
         Images result = imageService.updateImageProduct(productId, imageDTO);

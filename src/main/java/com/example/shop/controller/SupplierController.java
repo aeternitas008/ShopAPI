@@ -44,9 +44,8 @@ public class SupplierController {
     @PatchMapping("/updateAddress/{id}")
     public ResponseEntity<Supplier> updateSupplierAddress(
             @PathVariable UUID id,
-            @Valid @RequestBody AddressDTO addressDto) {
+            @RequestBody @Valid AddressDTO addressDto) {
 
-        supplierService.existsById(id);
         return ResponseEntity.ok(supplierService.updateSupplierAddress(id, addressDto));
     }
 
@@ -63,8 +62,8 @@ public class SupplierController {
     @GetMapping("/all")
     @Operation(summary = "Получить всех поставщиков")
     public ResponseEntity<List<Supplier>> getAllSuppliers(
-            @RequestParam(required = false) @Positive Integer limit,
-            @RequestParam(required = false) @PositiveOrZero Integer offset) {
+            @RequestParam(required = false) @Valid @Positive Integer limit,
+            @RequestParam(required = false) @Valid @PositiveOrZero Integer offset) {
 
         List<Supplier> suppliers = supplierService.getAll(limit, offset);
         return ResponseEntity.ok(suppliers);
@@ -74,7 +73,6 @@ public class SupplierController {
     @GetMapping("/{id}")
     @Operation(summary = "Поиск поставщика по id")
     public ResponseEntity<Supplier> getSupplier(@PathVariable UUID id) {
-        Supplier supplier = supplierService.getSupplierById(id);
-        return ResponseEntity.ok(supplier);
+        return ResponseEntity.ok(supplierService.findById(id));
     }
 }

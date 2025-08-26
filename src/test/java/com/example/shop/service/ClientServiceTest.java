@@ -220,7 +220,7 @@ class ClientServiceTest {
         when(clientRepository.findById(existingClientId)).thenReturn(Optional.of(client));
 
         // when
-        Client result = clientService.getClientById(existingClientId);
+        Client result = clientService.findById(existingClientId);
 
         // then
         assertNotNull(result);
@@ -236,7 +236,7 @@ class ClientServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class, () -> {
-            clientService.getClientById(nonExistingClientId);
+            clientService.findById(nonExistingClientId);
         });
 
         verify(clientRepository, times(1)).findById(nonExistingClientId);

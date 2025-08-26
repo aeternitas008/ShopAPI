@@ -80,7 +80,7 @@ class ProductServiceTest {
 
     private Images createImageEntity() {
         Images image = new Images();
-        image.setId(UUID.fromString("d4e5f6g7-h8i9-0123-defg-456789012345"));
+        image.setId(UUID.fromString("d4e5f6b7-a8c9-0123-defb-456789012345"));
         image.setImage("test-image".getBytes());
         return image;
     }
@@ -93,7 +93,7 @@ class ProductServiceTest {
         Supplier supplier = createSupplierEntity();
 
         when(productMapper.toEntity(productDTO)).thenReturn(productEntity);
-        when(supplierService.getById(supplierId)).thenReturn(supplier);
+        when(supplierService.findById(supplierId)).thenReturn(supplier);
         when(productRepository.save(productEntity)).thenReturn(productEntity);
 
         // when
@@ -106,7 +106,7 @@ class ProductServiceTest {
         assertEquals(supplier, result.getSupplier());
 
         verify(productMapper, times(1)).toEntity(productDTO);
-        verify(supplierService, times(1)).getById(supplierId);
+        verify(supplierService, times(1)).findById(supplierId);
         verify(productRepository, times(1)).save(productEntity);
     }
 
@@ -328,6 +328,9 @@ class ProductServiceTest {
     void decreaseAmountProductValidated_WithZeroCount_ShouldThrowBadRequestException() {
         // given
         long count = 0;
+
+        Product product = createProductEntity();
+        when(productService.findById(existingProductId)).thenReturn(product);
 
         // when & then
         assertThrows(BadRequestException.class, () -> {

@@ -219,19 +219,19 @@ class SupplierControllerTest {
     void getSupplier_WithExistingSupplier_Returns200() throws Exception {
         Supplier supplier = createSupplierEntity();
 
-        when(supplierService.getSupplierById(existingSupplierId)).thenReturn(supplier);
+        when(supplierService.findById(existingSupplierId)).thenReturn(supplier);
 
         mockMvc.perform(get("/api/v1/supplier/{id}", existingSupplierId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(existingSupplierId.toString()));
 
-        verify(supplierService, times(1)).getSupplierById(existingSupplierId);
+        verify(supplierService, times(1)).findById(existingSupplierId);
     }
 
     @Test
     void getSupplier_WithNonExistingSupplier_Returns404() throws Exception {
         // given
-        when(supplierService.getSupplierById(nonExistingSupplierId))
+        when(supplierService.findById(nonExistingSupplierId))
                 .thenThrow(NotFoundException.forSupplier(nonExistingSupplierId));
 
         // when & then
@@ -239,6 +239,6 @@ class SupplierControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));
 
-        verify(supplierService, times(1)).getSupplierById(nonExistingSupplierId);
+        verify(supplierService, times(1)).findById(nonExistingSupplierId);
     }
 }

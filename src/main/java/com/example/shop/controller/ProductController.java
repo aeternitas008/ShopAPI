@@ -42,7 +42,7 @@ public class ProductController {
     @PostMapping("/decrease/{id}")
     public ResponseEntity<Product> reductionOfProduct(
             @PathVariable UUID id,
-            @RequestParam @Positive long count) {
+            @RequestParam @Valid @Positive long count) {
 
         Product updatedProduct = productService.decreaseAmountProductValidated(id, count);
         return ResponseEntity.ok(updatedProduct);

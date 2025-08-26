@@ -15,7 +15,6 @@ import com.example.shop.model.Product;
 import com.example.shop.model.Supplier;
 import com.example.shop.repository.ProductRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,7 +30,7 @@ public class ProductService {
     // 1) Добавление товара
     public Product addProduct(ProductDTO productDto) {
         Product product = productMapper.toEntity(productDto);
-        Supplier supplier = supplierService.getById(productDto.getSupplierId());
+        Supplier supplier = supplierService.findById(productDto.getSupplierId());
         product.setSupplier(supplier);
         return productRepository.save(product);
     }
@@ -51,8 +50,8 @@ public class ProductService {
 
     // 3) Получение товара по id
     public Product findById(UUID id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+        return productRepository.findById(id).orElseThrow(
+                () -> NotFoundException.forProduct(id));
     }
 
     // 4) Получение всех товаров
@@ -62,6 +61,7 @@ public class ProductService {
 
     // 5) Удаление товара
     public void deleteProduct(UUID id) {
+        existsById(id);
         productRepository.deleteById(id);
     }
 

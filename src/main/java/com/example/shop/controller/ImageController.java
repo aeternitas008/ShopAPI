@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -43,8 +44,8 @@ public class ImageController {
             @ApiResponse(responseCode = "404", description = "Товар не найден")
     })
     public ResponseEntity<UUID> addImage(
-            @RequestParam UUID productId,
-            @RequestBody ImageDTO imageDto) {
+            @RequestParam @Valid UUID productId,
+            @RequestBody @Valid ImageDTO imageDto) {
 
         Images image = imageService.updateImageProduct(productId, imageDto);
         return ResponseEntity.ok(image.getId());
@@ -53,7 +54,7 @@ public class ImageController {
     // 2) Изменение изображения
     @PatchMapping("/{id}")
     @Operation(summary = "Обновление изображения")
-    public ResponseEntity<Images> updateImage(@PathVariable UUID id, @RequestBody ImageDTO imageDto) {
+    public ResponseEntity<Images> updateImage(@PathVariable UUID id, @RequestBody @Valid ImageDTO imageDto) {
         imageService.existsById(id);
         return ResponseEntity.ok(imageService.updateImage(id, imageDto));
     }
@@ -70,7 +71,7 @@ public class ImageController {
     // 4) Получение изображения товара
     @GetMapping("/by-product/{productId}")
     @Operation(summary = "Получение изображений товара", description = "Возвращает все изображения для указанного товара")
-    public ResponseEntity<Images> getImagesByProduct(@PathVariable UUID productId) {
+    public ResponseEntity<Images> getImagesByProduct(@PathVariable @Valid UUID productId) {
         Images image = imageService.findImageProduct(productId);
         if (image == null) {
             throw new NotFoundException("Изображение для товара с ID " + productId + " не найдено");

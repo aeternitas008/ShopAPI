@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.SupplierDTO;
 import com.example.shop.exception.NotFoundException;
-import com.example.shop.exception.SupplierNotFoundException;
 import com.example.shop.mapper.AddressMapper;
 import com.example.shop.mapper.SupplierMapper;
 import com.example.shop.model.Supplier;
@@ -34,16 +33,14 @@ public class SupplierService {
 
     // 2) Изменение адреса
     public Supplier updateAddress(UUID id, AddressDTO addressDTO) {
-        Supplier supplier = supplierRepository.findById(id).orElseThrow();
+        Supplier supplier = findById(id);
         supplier.setAddress(addressMapper.toEntity(addressDTO));
         return supplierRepository.save(supplier);
     }
 
     // 3) Удаление поставщика
     public void deleteSupplier(UUID id) {
-        if (!supplierRepository.existsById(id)) {
-            throw new SupplierNotFoundException(id);
-        }
+        existsById(id);
         supplierRepository.deleteById(id);
     }
 
@@ -57,21 +54,17 @@ public class SupplierService {
     }
 
     // 5) Получение поставщика по id
-    public Supplier getById(UUID id) {
-        return supplierRepository.findById(id).orElseThrow();
+    public Supplier findById(UUID id) {
+        return supplierRepository.findById(id).orElseThrow(
+                () -> NotFoundException.forSupplier(id));
     }
 
     public Supplier updateSupplierAddress(UUID id, AddressDTO addressDTO) {
-        Supplier supplier = supplierRepository.findById(id).orElseThrow();
+        Supplier supplier = findById(id);
 
         supplier.setAddress(addressMapper.toEntity(addressDTO));
 
         return supplierRepository.save(supplier);
-    }
-
-    public Supplier getSupplierById(UUID id) {
-        return supplierRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.forSupplier(id));
     }
 
     public void existsById(UUID id) {

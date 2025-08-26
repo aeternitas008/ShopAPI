@@ -127,7 +127,7 @@ class ImageControllerTest {
         ImageDTO imageDto = createValidImageDTO();
         Images updatedImage = createImageEntity();
 
-        when(imageService.existsById(nonExistingImageId)).thenReturn(true);
+        doNothing().when(imageService).existsById(nonExistingImageId);
         when(imageService.updateImage(existingImageId, imageDto)).thenReturn(updatedImage);
 
         // when & then
@@ -144,7 +144,7 @@ class ImageControllerTest {
     void updateImage_WithNonExistingId_Returns400() throws Exception {
         // given
         ImageDTO imageDto = createValidImageDTO();
-        when(imageService.existsById(nonExistingImageId)).thenReturn(false);
+        doNothing().when(imageService).existsById(nonExistingImageId);
 
         // when & then
         mockMvc.perform(patch("/api/v1/image/{id}", nonExistingImageId)
@@ -159,7 +159,7 @@ class ImageControllerTest {
 
     @Test
     void deleteImage_WithExistingId_Returns200() throws Exception {
-        when(imageService.existsById(nonExistingImageId)).thenReturn(false);
+        doNothing().when(imageService).existsById(nonExistingImageId);
         doNothing().when(imageService).deleteImageById(existingImageId);
 
         mockMvc.perform(delete("/api/v1/image/{id}", existingImageId))
@@ -171,7 +171,7 @@ class ImageControllerTest {
 
     @Test
     void deleteImage_WithNonExistingId_Returns400() throws Exception {
-        when(imageService.existsById(nonExistingImageId)).thenReturn(false);
+        doNothing().when(imageService).existsById(nonExistingImageId);
 
         mockMvc.perform(delete("/api/v1/image/{id}", nonExistingImageId))
                 .andExpect(status().isBadRequest())
