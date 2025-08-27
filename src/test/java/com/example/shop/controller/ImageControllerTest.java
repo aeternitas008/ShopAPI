@@ -51,8 +51,9 @@ class ImageControllerTest {
 
     // Вспомогательные методы для создания тестовых данных
     private ImageDTO createValidImageDTO() {
-        ImageDTO dto = new ImageDTO();
-        dto.setImage("test-image-data".getBytes());
+        ImageDTO dto = ImageDTO.builder()
+                .image("test-image-data".getBytes())
+                .build();
         return dto;
     }
 

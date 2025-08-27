@@ -49,8 +49,9 @@ class ImageServiceTest {
     private final UUID productId = UUID.fromString("b2c3d4e5-f6b7-8901-bcde-f23456789012");
 
     private ImageDTO createValidImageDTO() {
-        ImageDTO dto = new ImageDTO();
-        dto.setImage("test-image-data".getBytes());
+        ImageDTO dto = ImageDTO.builder()
+                .image("test-image-data".getBytes())
+                .build();
         return dto;
     }
 
