@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,15 +17,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.ClientDTO;
-import com.example.shop.exception.BadRequestException;
 import com.example.shop.model.Client;
 import com.example.shop.service.ClientService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/client")
 @RequiredArgsConstructor
@@ -42,6 +47,9 @@ public class ClientController {
 
     // 2) Удаление клиента
     @Operation(summary = "Удаление клиента", description = "Удаление клиента по id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Клиент с таким ID не найден")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteClient(@PathVariable UUID id) {
         clientService.existsById(id);
@@ -53,11 +61,10 @@ public class ClientController {
     @GetMapping("/search")
     @Operation(summary = "Поиск клиента по ФИ", description = "Поиск клиента по имени и фамилии")
     public ResponseEntity<List<Client>> getClientsByNameAndSurname(
-            @RequestParam @Valid @NotBlank String name,
-            @RequestParam @Valid @NotBlank String surname) {
+            @RequestParam @NotBlank String name,
+            @RequestParam @NotBlank String surname) {
 
         List<Client> clients = clientService.getClientsByNameAndSurname(name, surname);
-
         return ResponseEntity.ok(clients);
     }
 
@@ -65,22 +72,17 @@ public class ClientController {
     @GetMapping("/all")
     @Operation(summary = "Получить всех клиентов")
     public ResponseEntity<List<Client>> getAllClients(
-            @RequestParam(required = false) @Valid Integer limit,
-            @RequestParam(required = false) @Valid Integer offset) {
+            @RequestParam(required = false) @Positive Integer limit,
+            @RequestParam(required = false) @PositiveOrZero Integer offset) {
 
-        if (limit != null && limit <= 0) {
-            throw new BadRequestException("Limit должен быть > 0");
-        }
-        if (offset != null && offset < 0) {
-            throw new BadRequestException("Offset должен быть >= 0");
-        }
-
-        List<Client> clients = clientService.getAllClients(limit, offset);
-        return ResponseEntity.ok(clients);
+        return ResponseEntity.ok(clientService.getAllClients(limit, offset));
     }
 
     // 5) Изменение адреса клиента
     @Operation(summary = "Обновить адрес у клиента")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Клиент для обновления не найден")
+    })
     @PatchMapping("/update-address/{id}")
     public ResponseEntity<Client> updateClientAddress(
             @PathVariable UUID id,
@@ -92,6 +94,9 @@ public class ClientController {
     // 6) Получение клиента по ID
     @GetMapping("/{id}")
     @Operation(summary = "Получение клиента по ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Клиент с таким ID не найден")
+    })
     public ResponseEntity<Client> getClientById(@PathVariable UUID id) {
         Client client = clientService.findById(id);
         return ResponseEntity.ok(client);

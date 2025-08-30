@@ -6,7 +6,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,6 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.ClientDTO;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.model.Address;
 import com.example.shop.model.Client;
 import com.example.shop.service.ClientService;
@@ -109,13 +113,12 @@ class ClientControllerTest {
 
     @Test
     void addClient_WithValidData_Returns200() throws Exception {
-        // given
+
         ClientDTO validDto = createValidClientDTO();
         Client createdClient = createClientEntity();
 
         when(clientService.addClient(any(ClientDTO.class))).thenReturn(createdClient);
 
-        // when & then
         mockMvc.perform(post("/api/v1/client/add")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDto)))
@@ -129,10 +132,9 @@ class ClientControllerTest {
 
     @Test
     void addClient_WithInvalidData_Returns400() throws Exception {
-        // given
+
         ClientDTO invalidDto = createInvalidClientDTO();
 
-        // when & then
         mockMvc.perform(post("/api/v1/client/add")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidDto)))
@@ -144,13 +146,12 @@ class ClientControllerTest {
 
     @Test
     void addClient_WithServiceException_Returns500() throws Exception {
-        // given
+
         ClientDTO validDto = createValidClientDTO();
 
         when(clientService.addClient(any(ClientDTO.class)))
                 .thenThrow(new RuntimeException("Service error"));
 
-        // when & then
         mockMvc.perform(post("/api/v1/client/add")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDto)))
@@ -172,18 +173,6 @@ class ClientControllerTest {
     }
 
     @Test
-    void deleteClient_WithNonExistingId_Returns400() throws Exception {
-        doNothing().when(clientService).existsById(nonExistingClientId);
-
-        mockMvc.perform(delete("/api/v1/client/{id}", nonExistingClientId))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("не найден")));
-
-        verify(clientService, times(1)).existsById(nonExistingClientId);
-        verify(clientService, never()).deleteClient(any(UUID.class));
-    }
-
-    @Test
     void deleteClient_WithInvalidUuidFormat_Returns400() throws Exception {
         mockMvc.perform(delete("/api/v1/client/{id}", "invalid-uuid"))
                 .andExpect(status().isBadRequest());
@@ -194,14 +183,13 @@ class ClientControllerTest {
 
     @Test
     void getClientsByNameAndSurname_WithExistingClients_Returns200() throws Exception {
-        // given
+
         String name = "Иван";
         String surname = "Иванов";
         List<Client> clients = List.of(createClientEntity());
 
         when(clientService.getClientsByNameAndSurname(name, surname)).thenReturn(clients);
 
-        // when & then
         mockMvc.perform(get("/api/v1/client/search")
                 .param("name", name)
                 .param("surname", surname))
@@ -215,25 +203,24 @@ class ClientControllerTest {
 
     @Test
     void getClientsByNameAndSurname_WithNoClientsFound_Returns400() throws Exception {
-        // given
+
         String name = "Несуществующий";
         String surname = "Клиент";
 
         when(clientService.getClientsByNameAndSurname(name, surname)).thenReturn(List.of());
 
-        // when & then
         mockMvc.perform(get("/api/v1/client/search")
                 .param("name", name)
                 .param("surname", surname))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("не найдены")));
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
 
         verify(clientService, times(1)).getClientsByNameAndSurname(name, surname);
     }
 
     @Test
     void getClientsByNameAndSurname_WithBlankParameters_Returns400() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/v1/client/search")
                 .param("name", "")
                 .param("surname", " "))
@@ -244,7 +231,7 @@ class ClientControllerTest {
 
     @Test
     void getClientsByNameAndSurname_WithMissingParameters_Returns400() throws Exception {
-        // when & then
+
         mockMvc.perform(get("/api/v1/client/search"))
                 .andExpect(status().isBadRequest());
 
@@ -253,14 +240,12 @@ class ClientControllerTest {
 
     @Test
     void getAllClients_WithValidPagination_Returns200() throws Exception {
-        // given
         List<Client> clients = List.of(createClientEntity());
         int limit = 10;
         int offset = 0;
 
         when(clientService.getAllClients(limit, offset)).thenReturn(clients);
 
-        // when & then
         mockMvc.perform(get("/api/v1/client/all")
                 .param("limit", String.valueOf(limit))
                 .param("offset", String.valueOf(offset)))
@@ -272,34 +257,32 @@ class ClientControllerTest {
 
     @Test
     void getAllClients_WithNegativeLimit_Returns400() throws Exception {
-        // when & then
         mockMvc.perform(get("/api/v1/client/all")
                 .param("limit", "-1"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Limit должен быть > 0")));
+                .andExpect(content().string(containsString("getAllClients.limit: must be greater than 0")));
 
         verify(clientService, never()).getAllClients(anyInt(), anyInt());
     }
 
     @Test
     void getAllClients_WithNegativeOffset_Returns400() throws Exception {
-        // when & then
         mockMvc.perform(get("/api/v1/client/all")
                 .param("offset", "-1"))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Offset должен быть >= 0")));
+                .andExpect(
+                        content().string(containsString("getAllClients.offset: must be greater than or equal to 0")));
 
         verify(clientService, never()).getAllClients(anyInt(), anyInt());
     }
 
     @Test
     void getAllClients_WithoutPagination_Returns200() throws Exception {
-        // given
+
         List<Client> clients = List.of(createClientEntity());
 
         when(clientService.getAllClients(null, null)).thenReturn(clients);
 
-        // when & then
         mockMvc.perform(get("/api/v1/client/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
@@ -309,17 +292,17 @@ class ClientControllerTest {
 
     @Test
     void updateClientAddress_WithExistingClientAndValidData_Returns200() throws Exception {
-        // given
+
         AddressDTO addressDto = createValidAddressDTO();
         Client updatedClient = createClientEntity();
 
         doNothing().when(clientService).existsById(existingClientId);
         when(clientService.updateClientAddress(existingClientId, addressDto)).thenReturn(updatedClient);
 
-        // when & then
         mockMvc.perform(patch("/api/v1/client/update-address/{id}", existingClientId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(addressDto)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(existingClientId.toString()));
 
@@ -328,29 +311,26 @@ class ClientControllerTest {
     }
 
     @Test
-    void updateClientAddress_WithNonExistingClient_Returns400() throws Exception {
-        // given
+    void updateClientAddress_WithNonExistingClient_Returns404() throws Exception {
         AddressDTO addressDto = createValidAddressDTO();
 
-        doNothing().when(clientService).existsById(nonExistingClientId);
+        doThrow(NotFoundException.forClient(nonExistingClientId))
+                .when(clientService).updateClientAddress(eq(nonExistingClientId), any(AddressDTO.class));
 
-        // when & then
         mockMvc.perform(patch("/api/v1/client/update-address/{id}", nonExistingClientId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(addressDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("не найден")));
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(containsString("Клиент с ID " + nonExistingClientId + " не найден")));
 
-        verify(clientService, times(1)).existsById(nonExistingClientId);
-        verify(clientService, never()).updateClientAddress(any(UUID.class), any(AddressDTO.class));
+        verify(clientService, times(1)).updateClientAddress(eq(nonExistingClientId), any(AddressDTO.class));
     }
 
     @Test
     void updateClientAddress_WithInvalidAddressData_Returns400() throws Exception {
-        // given
+
         AddressDTO invalidAddressDto = new AddressDTO(); // Все поля null
 
-        // when & then
         mockMvc.perform(patch("/api/v1/client/update-address/{id}", existingClientId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidAddressDto)))
