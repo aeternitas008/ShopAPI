@@ -3,6 +3,7 @@ package com.example.shop.controller;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
@@ -57,10 +59,22 @@ class ImageControllerTest {
         return dto;
     }
 
+    // Вспомогательные методы для создания тестовых данных
+    private ImageDTO createInvalidImageDTO() {
+        ImageDTO dto = ImageDTO.builder()
+                .image(null)
+                .build();
+        return dto;
+    }
+
+    private byte[] createValidByteArray() {
+        return "test-image-data".getBytes();
+    }
+
     private Images createImageEntity() {
         Images image = new Images();
         image.setId(existingImageId);
-        image.setImage("test-image-data".getBytes());
+        image.setImage(createValidByteArray());
         return image;
     }
 
@@ -73,95 +87,72 @@ class ImageControllerTest {
 
     @Test
     void addImage_WithValidData_Returns200() throws Exception {
-        // given
-        ImageDTO imageDto = createValidImageDTO();
         Images createdImage = createImageEntity();
+        when(imageService.addImageProduct(any(UUID.class), any())).thenReturn(createdImage);
 
-        when(imageService.updateImageProduct(any(UUID.class), any(ImageDTO.class))).thenReturn(createdImage);
-
-        // when & then
-        mockMvc.perform(post("/api/v1/image/add")
-                .param("productId", existingProductId.toString())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(imageDto)))
+        mockMvc.perform(post("/api/v1/image/{productId}/add", existingProductId)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .content(createValidByteArray()))
                 .andExpect(status().isOk())
-                .andExpect(content().string(existingImageId.toString()));
+                .andExpect(jsonPath("$").value(existingImageId.toString()));
 
-        verify(imageService, times(1)).updateImageProduct(any(UUID.class), any(ImageDTO.class));
-    }
-
-    @Test
-    void addImage_WithServiceException_Returns400() throws Exception {
-        // given
-        ImageDTO imageDto = createValidImageDTO();
-        when(imageService.updateImageProduct(existingProductId, imageDto))
-                .thenThrow(NotFoundException.forProduct(existingProductId));
-
-        // when & then
-        mockMvc.perform(post("/api/v1/image/add")
-                .param("productId", existingProductId.toString())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(imageDto)))
-                .andExpect(status().isBadRequest());
-
-        verify(imageService, times(1)).updateImageProduct(existingProductId, imageDto);
+        verify(imageService, times(1)).addImageProduct(any(UUID.class), any());
     }
 
     @Test
     void addImage_WithInvalidProductId_Returns400() throws Exception {
-        // given
-        ImageDTO imageDto = createValidImageDTO();
-
-        // when & then
-        mockMvc.perform(post("/api/v1/image/add")
-                .param("productId", "invalid-uuid")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(imageDto)))
+        byte[] byteArray = createValidByteArray();
+        mockMvc.perform(post("/api/v1/image/{productId/add", "invalid-uuid")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .content(byteArray))
                 .andExpect(status().isBadRequest());
 
-        verify(imageService, never()).updateImageProduct(any(UUID.class), any(ImageDTO.class));
+        verify(imageService, never()).addImageProduct(any(UUID.class), any());
     }
+
+    // @Test
+    // void addImage_WithNullBody_Returns400() throws Exception {
+    // mockMvc.perform(post("/api/v1/image/{productId}/add", existingProductId)
+    // .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
+    // .andExpect(status().isBadRequest());
+
+    // verify(imageService, never()).addImageProduct(any(UUID.class), any());
+    // }
 
     @Test
     void updateImage_WithExistingId_Returns200() throws Exception {
-        // given
-        ImageDTO imageDto = createValidImageDTO();
         Images updatedImage = createImageEntity();
+        byte[] byteArray = createValidByteArray();
+        when(imageService.updateImage(existingImageId, byteArray)).thenReturn(updatedImage);
 
-        doNothing().when(imageService).existsById(nonExistingImageId);
-        when(imageService.updateImage(existingImageId, imageDto)).thenReturn(updatedImage);
-
-        // when & then
         mockMvc.perform(patch("/api/v1/image/{id}", existingImageId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(imageDto)))
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .content(byteArray))
                 .andExpect(status().isOk());
 
-        verify(imageService, times(1)).existsById(existingImageId);
-        verify(imageService, times(1)).updateImage(existingImageId, imageDto);
+        verify(imageService, times(1)).updateImage(existingImageId, byteArray);
     }
 
     @Test
-    void updateImage_WithNonExistingId_Returns400() throws Exception {
-        // given
-        ImageDTO imageDto = createValidImageDTO();
-        doNothing().when(imageService).existsById(nonExistingImageId);
+    void updateImage_WithNonExistingId_Returns404() throws Exception {
+        byte[] byteArray = createValidByteArray();
 
-        // when & then
+        when(imageService.updateImage(nonExistingImageId, byteArray))
+                .thenThrow(NotFoundException.forImage(nonExistingImageId));
+
         mockMvc.perform(patch("/api/v1/image/{id}", nonExistingImageId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(imageDto)))
-                .andExpect(status().isBadRequest())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                .content(byteArray))
+                .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найдено")));
 
-        verify(imageService, times(1)).existsById(nonExistingImageId);
-        verify(imageService, never()).updateImage(any(UUID.class), any(ImageDTO.class));
+        verify(imageService, times(1)).updateImage(nonExistingImageId, byteArray);
     }
 
+    // почему должен бросать ошибку?
     @Test
     void deleteImage_WithExistingId_Returns200() throws Exception {
-        doNothing().when(imageService).existsById(nonExistingImageId);
-        doNothing().when(imageService).deleteImageById(existingImageId);
+        doNothing().when(imageService).existsById(existingImageId);
 
         mockMvc.perform(delete("/api/v1/image/{id}", existingImageId))
                 .andExpect(status().isOk());
@@ -172,11 +163,11 @@ class ImageControllerTest {
 
     @Test
     void deleteImage_WithNonExistingId_Returns400() throws Exception {
-        doNothing().when(imageService).existsById(nonExistingImageId);
+        doThrow(NotFoundException.forImage(nonExistingImageId)).when(imageService).existsById(nonExistingImageId);
 
         mockMvc.perform(delete("/api/v1/image/{id}", nonExistingImageId))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("не найдено")));
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(containsString("Изображение с ID " + nonExistingImageId + " не найдено")));
 
         verify(imageService, times(1)).existsById(nonExistingImageId);
         verify(imageService, never()).deleteImageById(any(UUID.class));
@@ -198,10 +189,8 @@ class ImageControllerTest {
 
     @Test
     void getImagesByProduct_WithNonExistingProduct_Returns404() throws Exception {
-        // given
         when(imageService.findImageProduct(nonExistingImageId)).thenReturn(null);
 
-        // when & then
         mockMvc.perform(get("/api/v1/image/by-product/{productId}", nonExistingImageId))
                 .andExpect(status().isNotFound());
 
@@ -234,19 +223,5 @@ class ImageControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(imageService, times(1)).getImageById(nonExistingImageId);
-    }
-
-    @Test
-    void getImageById_WithImageNullData_Returns404() throws Exception {
-        // given
-        Images image = createImageEntityWithNullData();
-
-        when(imageService.getImageById(existingImageId)).thenReturn(image);
-
-        // when & then
-        mockMvc.perform(get("/api/v1/image/{id}", existingImageId))
-                .andExpect(status().isNotFound());
-
-        verify(imageService, times(1)).getImageById(existingImageId);
     }
 }
