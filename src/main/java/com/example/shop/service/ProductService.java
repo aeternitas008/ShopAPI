@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.shop.dto.ProductDTO;
-import com.example.shop.exception.BadRequestException;
+import com.example.shop.exception.NotEnoughGoodException;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.ProductMapper;
 import com.example.shop.model.Images;
@@ -37,14 +37,19 @@ public class ProductService {
 
     // 2) Уменьшение количества товара
     @Transactional
-    public Product decreaseAmountProduct(UUID productId, long requsted) {
+    public Product decreaseAmountProduct(UUID productId, long requested) {
         Product product = findById(productId);
         long currentQuantity = product.getAvailableQuantity();
-        if (currentQuantity < requsted) {
-            throw new BadRequestException(
-                    productId, currentQuantity, requsted);
+
+        if (requested <= 0) {
+            throw new IllegalArgumentException("Количество должно быть больше 0");
         }
-        product.setAvailableQuantity(product.getAvailableQuantity() - requsted);
+
+        if (currentQuantity < requested) {
+            throw new NotEnoughGoodException("Недостаточно товара в наличии", currentQuantity, requested);
+        }
+
+        product.setAvailableQuantity(currentQuantity - requested);
         return productRepository.save(product);
     }
 
@@ -77,29 +82,9 @@ public class ProductService {
         return findById(id).getImage();
     }
 
-    public Product getProductById(UUID id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.forProduct(id));
-    }
-
     public void existsById(UUID id) {
         if (!productRepository.existsById(id)) {
             throw NotFoundException.forProduct(id);
         }
     }
-
-    public Product decreaseAmountProductValidated(UUID id, long count) {
-        Product product = getProductById(id);
-
-        if (count <= 0) {
-            throw new BadRequestException("Количество должно быть больше 0");
-        }
-
-        if (product.getAvailableQuantity() < count) {
-            throw new BadRequestException("Недостаточно товара в наличии");
-        }
-
-        return decreaseAmountProduct(id, count);
-    }
-
 }
