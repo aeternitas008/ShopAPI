@@ -23,6 +23,6 @@ public class SupplierDTO {
     private AddressDTO addressDto;
 
     @NotBlank(message = "Phone number must not be empty")
-    @Pattern(regexp = "^\\+?[0-9\\- ]{7,20}$", message = "Phone number must be valid")
+    @Pattern(regexp = "^[0-9]{11}$", message = "Phone number must be exactly 11 digits")
     private String phoneNumber;
 }
