@@ -94,15 +94,16 @@ git clone https://github.com/aeternitas008/ShopAPi.git
 2. Настройте подключение к базе данных PostgreSQL в файле `application.properties`, например:
 ```
    spring.datasource.url=jdbc:postgresql://localhost:5432/your_db  
-   spring.datasource.username=your_username  
-   spring.datasource.password=your_password  
+   spring.datasource.username=postgres  
+   spring.datasource.password=postgres  
    spring.jpa.hibernate.ddl-auto=update
 ```
 
-4. Сборка и запуск проекта через Maven:  
+3. Сборка и запуск проекта через Maven:  
 ```bash
    mvn clean install  
    mvn spring-boot:run
 ```
-5. Доступ к Swagger UI для тестирования API:  
-   [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+4. Доступ к Swagger UI для тестирования API:  
+   [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
