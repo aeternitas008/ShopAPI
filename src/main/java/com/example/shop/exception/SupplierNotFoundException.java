@@ -14,16 +14,3 @@ public class SupplierNotFoundException extends CustomException {
         return supplierId;
     }
 }
-
-// public class SupplierNotFoundException extends RuntimeException {
-// private final UUID supplierId;
-
-// public SupplierNotFoundException(UUID supplierId) {
-// super("Supplier not found with ID: " + supplierId);
-// this.supplierId = supplierId;
-// }
-
-// public UUID getSupplierId() {
-// return supplierId;
-// }
-// }

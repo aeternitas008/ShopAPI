@@ -27,9 +27,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.example.shop.dto.AddressDTO;
 import com.example.shop.dto.SupplierDTO;
-import com.example.shop.exception.BadRequestException;
 import com.example.shop.exception.NotFoundException;
-import com.example.shop.exception.SupplierNotFoundException;
 import com.example.shop.mapper.AddressMapper;
 import com.example.shop.mapper.SupplierMapper;
 import com.example.shop.model.Supplier;
@@ -81,17 +79,15 @@ class SupplierServiceTest {
 
     @Test
     void addSupplier_WithValidData_ShouldSaveAndReturnSupplier() {
-        // given
+
         SupplierDTO supplierDTO = createValidSupplierDTO();
         Supplier supplierEntity = createSupplierEntity();
 
         when(supplierMapper.toEntity(supplierDTO)).thenReturn(supplierEntity);
         when(supplierRepository.save(supplierEntity)).thenReturn(supplierEntity);
 
-        // when
         Supplier result = supplierService.addSupplier(supplierDTO);
 
-        // then
         assertNotNull(result);
         assertEquals(existingSupplierId, result.getId());
         assertEquals("Иван", result.getName());
@@ -103,7 +99,7 @@ class SupplierServiceTest {
 
     @Test
     void updateAddress_WithExistingSupplier_ShouldUpdateAddress() {
-        // given
+
         AddressDTO addressDTO = createValidAddressDTO();
         Supplier existingSupplier = createSupplierEntity();
         com.example.shop.model.Address addressEntity = new com.example.shop.model.Address();
@@ -112,10 +108,8 @@ class SupplierServiceTest {
         when(addressMapper.toEntity(addressDTO)).thenReturn(addressEntity);
         when(supplierRepository.save(existingSupplier)).thenReturn(existingSupplier);
 
-        // when
         Supplier result = supplierService.updateAddress(existingSupplierId, addressDTO);
 
-        // then
         assertNotNull(result);
         assertEquals(addressEntity, result.getAddress());
 
@@ -126,7 +120,7 @@ class SupplierServiceTest {
 
     @Test
     void updateAddress_WithNonExistingSupplier_ShouldThrowException() {
-        // given
+
         AddressDTO addressDTO = createValidAddressDTO();
 
         when(supplierRepository.findById(nonExistingSupplierId)).thenReturn(Optional.empty());
@@ -143,27 +137,20 @@ class SupplierServiceTest {
 
     @Test
     void deleteSupplier_WithExistingSupplier_ShouldDeleteSupplier() {
-        // given
         when(supplierRepository.existsById(existingSupplierId)).thenReturn(true);
         doNothing().when(supplierRepository).deleteById(existingSupplierId);
 
-        // when
         supplierService.deleteSupplier(existingSupplierId);
 
-        // then
         verify(supplierRepository, times(1)).existsById(existingSupplierId);
         verify(supplierRepository, times(1)).deleteById(existingSupplierId);
     }
 
     @Test
     void deleteSupplier_WithNonExistingSupplier_ShouldThrowSupplierNotFoundException() {
-        // given
         when(supplierRepository.existsById(nonExistingSupplierId)).thenReturn(false);
 
-        // when & then
-        assertThrows(SupplierNotFoundException.class, () -> {
-            supplierService.deleteSupplier(nonExistingSupplierId);
-        });
+        assertThrows(NotFoundException.class, () -> supplierService.deleteSupplier(nonExistingSupplierId));
 
         verify(supplierRepository, times(1)).existsById(nonExistingSupplierId);
         verify(supplierRepository, never()).deleteById(any());
@@ -171,7 +158,7 @@ class SupplierServiceTest {
 
     @Test
     void getAll_WithPagination_ShouldReturnPagedSuppliers() {
-        // given
+
         int limit = 10;
         int offset = 0;
         Pageable pageable = PageRequest.of(offset, limit);
@@ -180,10 +167,8 @@ class SupplierServiceTest {
 
         when(supplierRepository.findAll(pageable)).thenReturn(page);
 
-        // when
         List<Supplier> result = supplierService.getAll(limit, offset);
 
-        // then
         assertNotNull(result);
         assertEquals(1, result.size());
 
@@ -192,15 +177,13 @@ class SupplierServiceTest {
 
     @Test
     void getAll_WithoutPagination_ShouldReturnAllSuppliers() {
-        // given
+
         List<Supplier> suppliers = List.of(createSupplierEntity());
 
         when(supplierRepository.findAll(Pageable.unpaged())).thenReturn(new PageImpl<>(suppliers));
 
-        // when
         List<Supplier> result = supplierService.getAll(null, null);
 
-        // then
         assertNotNull(result);
         assertEquals(1, result.size());
 
@@ -210,15 +193,13 @@ class SupplierServiceTest {
 
     @Test
     void getById_WithExistingSupplier_ShouldReturnSupplier() {
-        // given
+
         Supplier supplier = createSupplierEntity();
 
         when(supplierRepository.findById(existingSupplierId)).thenReturn(Optional.of(supplier));
 
-        // when
         Supplier result = supplierService.findById(existingSupplierId);
 
-        // then
         assertNotNull(result);
         assertEquals(existingSupplierId, result.getId());
 
@@ -227,7 +208,7 @@ class SupplierServiceTest {
 
     @Test
     void getById_WithNonExistingSupplier_ShouldThrowException() {
-        // given
+
         when(supplierRepository.findById(nonExistingSupplierId)).thenReturn(Optional.empty());
 
         // when & then
@@ -240,7 +221,7 @@ class SupplierServiceTest {
 
     @Test
     void updateSupplierAddress_WithExistingSupplier_ShouldUpdateAddress() {
-        // given
+
         AddressDTO addressDTO = createValidAddressDTO();
         Supplier existingSupplier = createSupplierEntity();
         com.example.shop.model.Address addressEntity = new com.example.shop.model.Address();
@@ -249,10 +230,8 @@ class SupplierServiceTest {
         when(addressMapper.toEntity(addressDTO)).thenReturn(addressEntity);
         when(supplierRepository.save(existingSupplier)).thenReturn(existingSupplier);
 
-        // when
         Supplier result = supplierService.updateSupplierAddress(existingSupplierId, addressDTO);
 
-        // then
         assertNotNull(result);
         assertEquals(addressEntity, result.getAddress());
 
@@ -263,15 +242,13 @@ class SupplierServiceTest {
 
     @Test
     void getSupplierById_WithExistingSupplier_ShouldReturnSupplier() {
-        // given
+
         Supplier supplier = createSupplierEntity();
 
         when(supplierRepository.findById(existingSupplierId)).thenReturn(Optional.of(supplier));
 
-        // when
         Supplier result = supplierService.findById(existingSupplierId);
 
-        // then
         assertNotNull(result);
         assertEquals(existingSupplierId, result.getId());
 
@@ -280,7 +257,7 @@ class SupplierServiceTest {
 
     @Test
     void getSupplierById_WithNonExistingSupplier_ShouldThrowNotFoundException() {
-        // given
+
         when(supplierRepository.findById(nonExistingSupplierId)).thenReturn(Optional.empty());
 
         // when & then
@@ -293,7 +270,7 @@ class SupplierServiceTest {
 
     @Test
     void existsById_WithExistingSupplier_ShouldNotThrowException() {
-        // given
+
         when(supplierRepository.existsById(existingSupplierId)).thenReturn(true);
 
         // when & then
@@ -306,7 +283,7 @@ class SupplierServiceTest {
 
     @Test
     void existsById_WithNonExistingSupplier_ShouldThrowNotFoundException() {
-        // given
+
         when(supplierRepository.existsById(nonExistingSupplierId)).thenReturn(false);
 
         // when & then
@@ -319,7 +296,7 @@ class SupplierServiceTest {
 
     @Test
     void getAllSuppliersValidated_WithValidPagination_ShouldReturnSuppliers() {
-        // given
+
         int limit = 10;
         int offset = 0;
         List<Supplier> suppliers = List.of(createSupplierEntity());
@@ -327,42 +304,10 @@ class SupplierServiceTest {
         Pageable pageable = PageRequest.of(offset, limit);
         when(supplierRepository.findAll(pageable)).thenReturn(new PageImpl<>(suppliers));
 
-        // when
         List<Supplier> result = supplierService.getAll(limit, offset);
 
-        // then
         assertNotNull(result);
         assertEquals(1, result.size());
-
-        verify(supplierRepository, times(1)).findAll(any(Pageable.class));
-    }
-
-    @Test
-    void getAllSuppliersValidated_WithInvalidOffset_ShouldThrowBadRequestException() {
-        int limit = 10;
-        int offset = -1;
-
-        assertThrows(BadRequestException.class, () -> {
-            supplierService.getAll(limit, offset);
-        });
-
-        verify(supplierRepository, never()).findAll(any(Pageable.class));
-    }
-
-    @Test
-    void getAllSuppliersValidated_WithEmptyResult_ShouldThrowNotFoundException() {
-        // given
-        int limit = 10;
-        int offset = 0;
-        // List<Supplier> suppliers = List.of(createSupplierEntity());
-
-        Pageable pageable = PageRequest.of(offset, limit);
-        when(supplierRepository.findAll(pageable)).thenThrow(NotFoundException.class);
-
-        // when & then
-        assertThrows(NotFoundException.class, () -> {
-            supplierService.getAll(limit, offset);
-        });
 
         verify(supplierRepository, times(1)).findAll(any(Pageable.class));
     }

@@ -296,8 +296,8 @@ class ClientControllerTest {
         AddressDTO addressDto = createValidAddressDTO();
         Client updatedClient = createClientEntity();
 
-        doNothing().when(clientService).existsById(existingClientId);
-        when(clientService.updateClientAddress(existingClientId, addressDto)).thenReturn(updatedClient);
+        when(clientService.updateClientAddress(eq(existingClientId), any(AddressDTO.class)))
+                .thenReturn(updatedClient);
 
         mockMvc.perform(patch("/api/v1/client/update-address/{id}", existingClientId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -306,8 +306,7 @@ class ClientControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(existingClientId.toString()));
 
-        verify(clientService, times(1)).existsById(existingClientId);
-        verify(clientService, times(1)).updateClientAddress(existingClientId, addressDto);
+        verify(clientService, times(1)).updateClientAddress(eq(existingClientId), any(AddressDTO.class));
     }
 
     @Test

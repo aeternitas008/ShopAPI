@@ -54,7 +54,6 @@ public class Product {
     @JoinColumn(name = "supplier_id", nullable = false)
     private Supplier supplier;
 
-    @NotNull(message = "Изображение обязательно")
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "image_id", nullable = false, columnDefinition = "uuid")
     private Images image;

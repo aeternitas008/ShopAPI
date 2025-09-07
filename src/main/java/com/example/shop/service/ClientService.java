@@ -49,7 +49,15 @@ public class ClientService {
             Page<Client> page = clientRepository.findAll(pageable);
             return page.getContent();
         }
-        // @TODO null ???
+        if (limit == null && offset == null) {
+            return clientRepository.findAll();
+        } else {
+            throw new IllegalArgumentException("Недостаточно параметров для пагинации");
+        }
+    }
+
+    // 4) Получение всех клиентов (без пагинацией)
+    public List<Client> getAllClients() {
         return clientRepository.findAll();
     }
 

@@ -4,10 +4,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.example.shop.dto.ImageDTO;
 import com.example.shop.exception.BadRequestException;
 import com.example.shop.exception.NotFoundException;
-import com.example.shop.mapper.ImageMapper;
 import com.example.shop.model.Images;
 import com.example.shop.repository.ImageRepository;
 
@@ -18,31 +16,36 @@ import lombok.RequiredArgsConstructor;
 public class ImageService {
 
     private final ImageRepository imageRepository;
-    private final ImageMapper imageMapper;
-
     private final ProductService productService;
 
     // 0) Добавить/Создать картинку
-    public Images addImage(ImageDTO imageDto) {
-        return imageRepository.save(imageMapper.toEntity(imageDto));
+    public Images addImage(byte[] byteArray) {
+        if (byteArray == null || byteArray.length == 0) {
+            throw new IllegalArgumentException("Некорректное/пустое изображение");
+        }
+        Images image = new Images();
+        image.setImage(byteArray);
+        return imageRepository.save(image);
     }
 
-    // 1) Обновить картинку у продукта
-    public Images updateImageProduct(UUID productId, ImageDTO imageDto) {
-        Images image = addImage(imageDto);
+    // 1) Добавить картинку продукту
+    public Images addImageProduct(UUID productId, byte[] byteArray) {
+
+        Images image = addImage(byteArray);
         productService.updateImage(productId, image);
         return imageRepository.save(image);
     }
 
     // 2) Обновить картинку по id
-    public Images updateImage(UUID id, ImageDTO imageDTO) {
+    public Images updateImage(UUID id, byte[] byteArray) {
         Images image = findById(id);
-        image.setImage(imageDTO.getImage());
+        image.setImage(byteArray);
         return imageRepository.save(image);
     }
 
     // 3) Удаление клиента
     public void deleteImageById(UUID id) {
+        existsById(id);
         imageRepository.deleteById(id);
     }
 
@@ -66,7 +69,7 @@ public class ImageService {
             throw NotFoundException.forImage(id);
     }
 
-    private Images findById(UUID id) {
+    public Images findById(UUID id) {
         return imageRepository.findById(id)
                 .orElseThrow(() -> NotFoundException.forImage(id));
     }

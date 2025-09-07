@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,15 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.shop.dto.ProductDTO;
-import com.example.shop.exception.BadRequestException;
+import com.example.shop.exception.NotEnoughGoodException;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.ProductMapper;
 import com.example.shop.model.Images;
 import com.example.shop.model.Product;
 import com.example.shop.model.Supplier;
 import com.example.shop.repository.ProductRepository;
-
-import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -87,7 +84,6 @@ class ProductServiceTest {
 
     @Test
     void addProduct_WithValidData_ShouldSaveAndReturnProduct() {
-        // given
         ProductDTO productDTO = createValidProductDTO();
         Product productEntity = createProductEntity();
         Supplier supplier = createSupplierEntity();
@@ -96,280 +92,157 @@ class ProductServiceTest {
         when(supplierService.findById(supplierId)).thenReturn(supplier);
         when(productRepository.save(productEntity)).thenReturn(productEntity);
 
-        // when
         Product result = productService.addProduct(productDTO);
 
-        // then
         assertNotNull(result);
         assertEquals(existingProductId, result.getId());
         assertEquals("Test Product", result.getTitle());
         assertEquals(supplier, result.getSupplier());
 
-        verify(productMapper, times(1)).toEntity(productDTO);
-        verify(supplierService, times(1)).findById(supplierId);
-        verify(productRepository, times(1)).save(productEntity);
+        verify(productMapper).toEntity(productDTO);
+        verify(supplierService).findById(supplierId);
+        verify(productRepository).save(productEntity);
     }
 
     @Test
     void decreaseAmountProduct_WithSufficientQuantity_ShouldDecreaseQuantity() {
-        // given
         Product product = createProductEntity();
         product.setAvailableQuantity(10);
-        long requested = 3;
 
         when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
 
-        // when
-        Product result = productService.decreaseAmountProduct(existingProductId, requested);
+        Product result = productService.decreaseAmountProduct(existingProductId, 3);
 
-        // then
         assertNotNull(result);
         assertEquals(7, result.getAvailableQuantity());
 
-        verify(productRepository, times(1)).findById(existingProductId);
-        verify(productRepository, times(1)).save(product);
+        verify(productRepository).findById(existingProductId);
+        verify(productRepository).save(product);
     }
 
     @Test
-    void decreaseAmountProduct_WithInsufficientQuantity_ShouldThrowBadRequestException() {
-        // given
+    void decreaseAmountProduct_WithInsufficientQuantity_ShouldThrowNotEnoughGoodException() {
         Product product = createProductEntity();
         product.setAvailableQuantity(5);
-        long requested = 10;
 
         when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
 
-        // when & then
-        assertThrows(BadRequestException.class, () -> {
-            productService.decreaseAmountProduct(existingProductId, requested);
-        });
+        assertThrows(NotEnoughGoodException.class,
+                () -> productService.decreaseAmountProduct(existingProductId, 10));
 
-        verify(productRepository, times(1)).findById(existingProductId);
+        verify(productRepository).findById(existingProductId);
         verify(productRepository, never()).save(any());
     }
 
     @Test
     void findById_WithExistingProduct_ShouldReturnProduct() {
-        // given
         Product product = createProductEntity();
 
         when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
 
-        // when
         Product result = productService.findById(existingProductId);
 
-        // then
         assertNotNull(result);
         assertEquals(existingProductId, result.getId());
 
-        verify(productRepository, times(1)).findById(existingProductId);
+        verify(productRepository).findById(existingProductId);
     }
 
     @Test
-    void findById_WithNonExistingProduct_ShouldThrowEntityNotFoundException() {
-        // given
+    void findById_WithNonExistingProduct_ShouldThrowNotFoundException() {
         when(productRepository.findById(nonExistingProductId)).thenReturn(Optional.empty());
 
-        // when & then
-        assertThrows(EntityNotFoundException.class, () -> {
-            productService.findById(nonExistingProductId);
-        });
+        assertThrows(NotFoundException.class,
+                () -> productService.findById(nonExistingProductId));
 
-        verify(productRepository, times(1)).findById(nonExistingProductId);
+        verify(productRepository).findById(nonExistingProductId);
     }
 
     @Test
     void getAllProducts_ShouldReturnAllProducts() {
-        // given
         List<Product> products = List.of(createProductEntity());
-
         when(productRepository.findAll()).thenReturn(products);
 
-        // when
         List<Product> result = productService.getAllProducts();
 
-        // then
         assertNotNull(result);
         assertEquals(1, result.size());
 
-        verify(productRepository, times(1)).findAll();
+        verify(productRepository).findAll();
     }
 
     @Test
     void deleteProduct_WithExistingProduct_ShouldCallRepositoryDelete() {
-        // given
+        when(productRepository.existsById(existingProductId)).thenReturn(true);
         doNothing().when(productRepository).deleteById(existingProductId);
 
-        // when
         productService.deleteProduct(existingProductId);
 
-        // then
-        verify(productRepository, times(1)).deleteById(existingProductId);
+        verify(productRepository).existsById(existingProductId);
+        verify(productRepository).deleteById(existingProductId);
+    }
+
+    @Test
+    void deleteProduct_WithNonExistingProduct_ShouldThrowNotFoundException() {
+        when(productRepository.existsById(nonExistingProductId)).thenReturn(false);
+
+        assertThrows(NotFoundException.class,
+                () -> productService.deleteProduct(nonExistingProductId));
+
+        verify(productRepository).existsById(nonExistingProductId);
+        verify(productRepository, never()).deleteById(any());
     }
 
     @Test
     void updateImage_WithExistingProduct_ShouldUpdateImage() {
-        // given
         Product product = createProductEntity();
         Images image = createImageEntity();
 
         when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
 
-        // when
         Product result = productService.updateImage(existingProductId, image);
 
-        // then
         assertNotNull(result);
         assertEquals(image, result.getImage());
 
-        verify(productRepository, times(1)).findById(existingProductId);
-        verify(productRepository, times(1)).save(product);
+        verify(productRepository).findById(existingProductId);
+        verify(productRepository).save(product);
     }
 
     @Test
     void getImage_WithExistingProductWithImage_ShouldReturnImage() {
-        // given
         Product product = createProductEntity();
         Images image = createImageEntity();
         product.setImage(image);
 
         when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
 
-        // when
         Images result = productService.getImage(existingProductId);
 
-        // then
         assertNotNull(result);
         assertEquals(image, result);
 
-        verify(productRepository, times(1)).findById(existingProductId);
-    }
-
-    @Test
-    void getProductById_WithExistingProduct_ShouldReturnProduct() {
-        // given
-        Product product = createProductEntity();
-
-        when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
-
-        // when
-        Product result = productService.getProductById(existingProductId);
-
-        // then
-        assertNotNull(result);
-        assertEquals(existingProductId, result.getId());
-
-        verify(productRepository, times(1)).findById(existingProductId);
-    }
-
-    @Test
-    void getProductById_WithNonExistingProduct_ShouldThrowNotFoundException() {
-        // given
-        when(productRepository.findById(nonExistingProductId)).thenReturn(Optional.empty());
-
-        // when & then
-        assertThrows(NotFoundException.class, () -> {
-            productService.getProductById(nonExistingProductId);
-        });
-
-        verify(productRepository, times(1)).findById(nonExistingProductId);
+        verify(productRepository).findById(existingProductId);
     }
 
     @Test
     void existsById_WithExistingProduct_ShouldNotThrowException() {
-        // given
         when(productRepository.existsById(existingProductId)).thenReturn(true);
 
-        // when & then
-        assertDoesNotThrow(() -> {
-            productService.existsById(existingProductId);
-        });
+        assertDoesNotThrow(() -> productService.existsById(existingProductId));
 
-        verify(productRepository, times(1)).existsById(existingProductId);
+        verify(productRepository).existsById(existingProductId);
     }
 
     @Test
     void existsById_WithNonExistingProduct_ShouldThrowNotFoundException() {
-        // given
         when(productRepository.existsById(nonExistingProductId)).thenReturn(false);
 
-        // when & then
-        assertThrows(NotFoundException.class, () -> {
-            productService.existsById(nonExistingProductId);
-        });
+        assertThrows(NotFoundException.class,
+                () -> productService.existsById(nonExistingProductId));
 
-        verify(productRepository, times(1)).existsById(nonExistingProductId);
-    }
-
-    @Test
-    void decreaseAmountProductValidated_WithValidData_ShouldDecreaseQuantity() {
-        // given
-        Product product = createProductEntity();
-        product.setAvailableQuantity(10);
-        long count = 3;
-
-        when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
-        when(productRepository.save(product)).thenReturn(product);
-
-        // when
-        Product result = productService.decreaseAmountProductValidated(existingProductId, count);
-
-        // then
-        assertNotNull(result);
-        assertEquals(7, result.getAvailableQuantity());
-
-        verify(productRepository, times(1)).findById(existingProductId);
-        verify(productRepository, times(1)).save(product);
-    }
-
-    @Test
-    void decreaseAmountProductValidated_WithZeroCount_ShouldThrowBadRequestException() {
-        // given
-        long count = 0;
-
-        Product product = createProductEntity();
-        when(productService.findById(existingProductId)).thenReturn(product);
-
-        // when & then
-        assertThrows(BadRequestException.class, () -> {
-            productService.decreaseAmountProductValidated(existingProductId, count);
-        });
-
-        verify(productRepository, never()).findById(any());
-        verify(productRepository, never()).save(any());
-    }
-
-    @Test
-    void decreaseAmountProductValidated_WithNegativeCount_ShouldThrowBadRequestException() {
-        // given
-        long count = -5;
-
-        // when & then
-        assertThrows(BadRequestException.class, () -> {
-            productService.decreaseAmountProductValidated(existingProductId, count);
-        });
-
-        verify(productRepository, never()).findById(any());
-        verify(productRepository, never()).save(any());
-    }
-
-    @Test
-    void decreaseAmountProductValidated_WithInsufficientQuantity_ShouldThrowBadRequestException() {
-        // given
-        Product product = createProductEntity();
-        product.setAvailableQuantity(5);
-        long count = 10;
-
-        when(productRepository.findById(existingProductId)).thenReturn(Optional.of(product));
-
-        // when & then
-        assertThrows(BadRequestException.class, () -> {
-            productService.decreaseAmountProductValidated(existingProductId, count);
-        });
-
-        verify(productRepository, times(1)).findById(existingProductId);
-        verify(productRepository, never()).save(any());
+        verify(productRepository).existsById(nonExistingProductId);
     }
 }

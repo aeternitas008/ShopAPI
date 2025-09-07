@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -20,11 +21,14 @@ import com.example.shop.model.Supplier;
 import com.example.shop.service.SupplierService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/supplier")
 @RequiredArgsConstructor
@@ -41,6 +45,9 @@ public class SupplierController {
 
     // 2) Изменение адреса поставщика
     @Operation(summary = "Обновить адрес у поставщика")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Поставщик для обновления не найден")
+    })
     @PatchMapping("/updateAddress/{id}")
     public ResponseEntity<Supplier> updateSupplierAddress(
             @PathVariable UUID id,
@@ -51,6 +58,9 @@ public class SupplierController {
 
     // 3) Удаление поставщика
     @Operation(summary = "Удаление поставщика", description = "Удаление поставщика по id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Поставщик с таким ID не найден")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSupplier(@PathVariable UUID id) {
         supplierService.existsById(id);
@@ -62,8 +72,8 @@ public class SupplierController {
     @GetMapping("/all")
     @Operation(summary = "Получить всех поставщиков")
     public ResponseEntity<List<Supplier>> getAllSuppliers(
-            @RequestParam(required = false) @Valid @Positive Integer limit,
-            @RequestParam(required = false) @Valid @PositiveOrZero Integer offset) {
+            @RequestParam(required = false) @Positive Integer limit,
+            @RequestParam(required = false) @PositiveOrZero Integer offset) {
 
         List<Supplier> suppliers = supplierService.getAll(limit, offset);
         return ResponseEntity.ok(suppliers);
@@ -72,6 +82,9 @@ public class SupplierController {
     // 5) Поиск поставщика по id
     @GetMapping("/{id}")
     @Operation(summary = "Поиск поставщика по id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Поставщик с таким ID не найден")
+    })
     public ResponseEntity<Supplier> getSupplier(@PathVariable UUID id) {
         return ResponseEntity.ok(supplierService.findById(id));
     }

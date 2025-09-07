@@ -8,20 +8,20 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalRestExceptionHandler {
 
     // 404
     @ExceptionHandler({ NotFoundException.class, EntityNotFoundException.class })
@@ -39,11 +39,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    // Для empty body/null
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> handleMethodArgumentNotValid(HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
     // Для @RequestParam, @PathVariable (@Positive, @NotBlank и т.д.)
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
-        log.error("Ошибка валидации: " + ex.getMessage());
-        return ResponseEntity.badRequest().body("Ошибка валидации, некорректные входные данные " + ex.getMessage());
+        return ResponseEntity.badRequest().body("Validation failure: " + ex.getMessage());
     }
 
     // IllegalArgumentException
@@ -52,11 +57,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
 
+    // Твоя кастомная ошибка 409
     @ExceptionHandler(NotEnoughGoodException.class)
     public ResponseEntity<String> handleNotEnoughGoodException(NotEnoughGoodException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
+    // UUID и прочие ошибки типа
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         Map<String, String> error = new HashMap<>();
@@ -72,6 +79,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<String> handleMissingParam(MissingServletRequestParameterException ex) {
         return ResponseEntity.badRequest().body("Missing parameter: " + ex.getParameterName());
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<String> handleMissingRequestPart(MissingServletRequestPartException ex) {
+        return ResponseEntity.badRequest().body("Missing request body");
     }
 
     // На всякий случай — RuntimeException

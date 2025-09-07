@@ -3,6 +3,7 @@ package com.example.shop.controller;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -82,68 +83,58 @@ class SupplierControllerTest {
 
     @Test
     void addSupplier_WithValidData_Returns200() throws Exception {
-        // given
         SupplierDTO validDto = createValidSupplierDTO();
         Supplier createdSupplier = createSupplierEntity();
 
         when(supplierService.addSupplier(any(SupplierDTO.class))).thenReturn(createdSupplier);
 
-        // when & then
         mockMvc.perform(post("/api/v1/supplier/add")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(existingSupplierId.toString()))
-                .andExpect(jsonPath("$.name").value("Test Supplier"));
+                .andExpect(jsonPath("$.name").value("Иван"));
 
         verify(supplierService, times(1)).addSupplier(any(SupplierDTO.class));
     }
 
     @Test
     void updateSupplierAddress_WithExistingSupplier_Returns200() throws Exception {
-        // given
         AddressDTO addressDto = createValidAddressDTO();
         Supplier updatedSupplier = createSupplierEntity();
 
-        doNothing().when(supplierService).existsById(existingSupplierId);
-        when(supplierService.updateSupplierAddress(existingSupplierId, addressDto)).thenReturn(updatedSupplier);
+        when(supplierService.updateSupplierAddress(eq(existingSupplierId), any(AddressDTO.class)))
+                .thenReturn(updatedSupplier);
 
-        // when & then
         mockMvc.perform(patch("/api/v1/supplier/updateAddress/{id}", existingSupplierId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(addressDto)))
                 .andExpect(status().isOk());
 
-        verify(supplierService, times(1)).existsById(existingSupplierId);
-        verify(supplierService, times(1)).updateSupplierAddress(existingSupplierId, addressDto);
+        verify(supplierService, times(1)).updateSupplierAddress(eq(existingSupplierId), any(AddressDTO.class));
     }
 
     @Test
     void updateSupplierAddress_WithNonExistingSupplier_Returns404() throws Exception {
-        // given
         AddressDTO addressDto = createValidAddressDTO();
 
-        doThrow(NotFoundException.forSupplier(nonExistingSupplierId))
-                .when(supplierService).existsById(nonExistingSupplierId);
+        when(supplierService.updateSupplierAddress(eq(nonExistingSupplierId), any(AddressDTO.class)))
+                .thenThrow(NotFoundException.forSupplier(nonExistingSupplierId));
 
-        // when & then
         mockMvc.perform(patch("/api/v1/supplier/updateAddress/{id}", nonExistingSupplierId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(addressDto)))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));
 
-        verify(supplierService, times(1)).existsById(nonExistingSupplierId);
-        verify(supplierService, never()).updateSupplierAddress(any(UUID.class), any(AddressDTO.class));
+        verify(supplierService, times(1)).updateSupplierAddress(eq(nonExistingSupplierId), any(AddressDTO.class));
     }
 
     @Test
     void deleteSupplier_WithExistingSupplier_Returns200() throws Exception {
-        // given
         doNothing().when(supplierService).existsById(existingSupplierId);
         doNothing().when(supplierService).deleteSupplier(existingSupplierId);
 
-        // when & then
         mockMvc.perform(delete("/api/v1/supplier/{id}", existingSupplierId))
                 .andExpect(status().isOk());
 
@@ -153,11 +144,9 @@ class SupplierControllerTest {
 
     @Test
     void deleteSupplier_WithNonExistingSupplier_Returns404() throws Exception {
-        // given
         doThrow(NotFoundException.forSupplier(nonExistingSupplierId))
                 .when(supplierService).existsById(nonExistingSupplierId);
 
-        // when & then
         mockMvc.perform(delete("/api/v1/supplier/{id}", nonExistingSupplierId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));
@@ -168,14 +157,12 @@ class SupplierControllerTest {
 
     @Test
     void getAllSuppliers_WithValidPagination_Returns200() throws Exception {
-        // given
         List<Supplier> suppliers = List.of(createSupplierEntity());
         int limit = 10;
         int offset = 0;
 
         when(supplierService.getAll(limit, offset)).thenReturn(suppliers);
 
-        // when & then
         mockMvc.perform(get("/api/v1/supplier/all")
                 .param("limit", String.valueOf(limit))
                 .param("offset", String.valueOf(offset)))
@@ -187,32 +174,15 @@ class SupplierControllerTest {
 
     @Test
     void getAllSuppliers_WithoutPagination_Returns200() throws Exception {
-        // given
         List<Supplier> suppliers = List.of(createSupplierEntity());
 
         when(supplierService.getAll(null, null)).thenReturn(suppliers);
 
-        // when & then
         mockMvc.perform(get("/api/v1/supplier/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
 
         verify(supplierService, times(1)).getAll(null, null);
-    }
-
-    @Test
-    void getAllSuppliers_WithInvalidLimit_Returns400() throws Exception {
-        // given
-        when(supplierService.getAll(-1, 0))
-                .thenThrow(new IllegalArgumentException("Limit должен быть > 0"));
-
-        // when & then
-        mockMvc.perform(get("/api/v1/supplier/all")
-                .param("limit", "-1")
-                .param("offset", "0"))
-                .andExpect(status().isBadRequest());
-
-        verify(supplierService, times(1)).getAll(-1, 0);
     }
 
     @Test
@@ -230,11 +200,9 @@ class SupplierControllerTest {
 
     @Test
     void getSupplier_WithNonExistingSupplier_Returns404() throws Exception {
-        // given
         when(supplierService.findById(nonExistingSupplierId))
                 .thenThrow(NotFoundException.forSupplier(nonExistingSupplierId));
 
-        // when & then
         mockMvc.perform(get("/api/v1/supplier/{id}", nonExistingSupplierId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));

@@ -26,7 +26,6 @@ import com.example.shop.exception.BadRequestException;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.mapper.ImageMapper;
 import com.example.shop.model.Images;
-import com.example.shop.model.Product;
 import com.example.shop.repository.ImageRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,12 +46,17 @@ class ImageServiceTest {
     private final UUID existingImageId = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private final UUID nonExistingImageId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private final UUID productId = UUID.fromString("b2c3d4e5-f6b7-8901-bcde-f23456789012");
+    private final byte[] newValidByteArray = "new-test-image-data".getBytes();
 
     private ImageDTO createValidImageDTO() {
         ImageDTO dto = ImageDTO.builder()
                 .image("test-image-data".getBytes())
                 .build();
         return dto;
+    }
+
+    private byte[] createValidByteArray() {
+        return "test-image-data".getBytes();
     }
 
     private Images createImageEntity() {
@@ -71,50 +75,41 @@ class ImageServiceTest {
 
     @Test
     void addImage_WithValidData_ShouldSaveAndReturnImage() {
-        // given
         ImageDTO imageDTO = createValidImageDTO();
         Images imageEntity = createImageEntity();
 
-        when(imageMapper.toEntity(imageDTO)).thenReturn(imageEntity);
-        when(imageRepository.save(imageEntity)).thenReturn(imageEntity);
+        when(imageRepository.save(any(Images.class))).thenReturn(imageEntity);
 
-        // when
-        Images result = imageService.addImage(imageDTO);
+        Images result = imageService.addImage(imageDTO.getImage());
 
-        // then
         assertNotNull(result);
         assertEquals(existingImageId, result.getId());
         assertArrayEquals("test-image-data".getBytes(), result.getImage());
 
-        verify(imageMapper, times(1)).toEntity(imageDTO);
-        verify(imageRepository, times(1)).save(imageEntity);
+        verify(imageRepository, times(1)).save(any(Images.class));
     }
 
     @Test
     void updateImageProduct_WithValidData_ShouldSaveImageAndUpdateProduct() {
-        // given
-        ImageDTO imageDTO = createValidImageDTO();
         Images imageEntity = createImageEntity();
 
-        when(imageMapper.toEntity(imageDTO)).thenReturn(imageEntity);
-        when(imageRepository.save(imageEntity)).thenReturn(imageEntity);
-        when(productService.updateImage(productId, imageEntity)).thenReturn(any(Product.class));
+        when(imageRepository.findById(existingImageId)).thenReturn(Optional.of(imageEntity));
 
-        // when
-        Images result = imageService.updateImageProduct(productId, imageDTO);
+        imageEntity.setImage(newValidByteArray);
+        when(imageRepository.save(any(Images.class))).thenReturn(imageEntity);
 
-        // then
+        Images result = imageService.updateImage(existingImageId, newValidByteArray);
+
         assertNotNull(result);
         assertEquals(existingImageId, result.getId());
+        assertEquals(newValidByteArray, result.getImage());
 
-        verify(imageMapper, times(1)).toEntity(imageDTO);
+        verify(imageRepository, times(1)).findById(existingImageId);
         verify(imageRepository, times(1)).save(imageEntity);
-        verify(productService, times(1)).updateImage(productId, imageEntity);
     }
 
     @Test
     void updateImage_WithExistingImage_ShouldUpdateImageData() {
-        // given
         ImageDTO imageDTO = createValidImageDTO();
         Images existingImage = createImageEntity();
         byte[] newImageData = "new-image-data".getBytes();
@@ -123,10 +118,8 @@ class ImageServiceTest {
         when(imageRepository.findById(existingImageId)).thenReturn(Optional.of(existingImage));
         when(imageRepository.save(existingImage)).thenReturn(existingImage);
 
-        // when
-        Images result = imageService.updateImage(existingImageId, imageDTO);
+        Images result = imageService.updateImage(existingImageId, imageDTO.getImage());
 
-        // then
         assertNotNull(result);
         assertArrayEquals(newImageData, result.getImage());
 
@@ -136,14 +129,13 @@ class ImageServiceTest {
 
     @Test
     void updateImage_WithNonExistingImage_ShouldThrowNotFoundException() {
-        // given
         ImageDTO imageDTO = createValidImageDTO();
 
         when(imageRepository.findById(nonExistingImageId)).thenReturn(Optional.empty());
 
         // when & then
         assertThrows(NotFoundException.class, () -> {
-            imageService.updateImage(nonExistingImageId, imageDTO);
+            imageService.updateImage(nonExistingImageId, imageDTO.getImage());
         });
 
         verify(imageRepository, times(1)).findById(nonExistingImageId);
@@ -152,27 +144,23 @@ class ImageServiceTest {
 
     @Test
     void deleteImageById_WithExistingImage_ShouldCallRepositoryDelete() {
-        // given
+        when(imageRepository.existsById(existingImageId)).thenReturn(true);
         doNothing().when(imageRepository).deleteById(existingImageId);
 
-        // when
         imageService.deleteImageById(existingImageId);
 
-        // then
+        verify(imageRepository, times(1)).existsById(existingImageId);
         verify(imageRepository, times(1)).deleteById(existingImageId);
     }
 
     @Test
     void findImageProduct_ShouldReturnProductImage() {
-        // given
         Images productImage = createImageEntity();
 
         when(productService.getImage(productId)).thenReturn(productImage);
 
-        // when
         Images result = imageService.findImageProduct(productId);
 
-        // then
         assertNotNull(result);
         assertEquals(existingImageId, result.getId());
 
@@ -181,15 +169,12 @@ class ImageServiceTest {
 
     @Test
     void getImageById_WithExistingImageWithData_ShouldReturnImage() {
-        // given
         Images image = createImageEntity();
 
         when(imageRepository.findById(existingImageId)).thenReturn(Optional.of(image));
 
-        // when
         Images result = imageService.getImageById(existingImageId);
 
-        // then
         assertNotNull(result);
         assertEquals(existingImageId, result.getId());
         assertArrayEquals("test-image-data".getBytes(), result.getImage());
@@ -199,7 +184,6 @@ class ImageServiceTest {
 
     @Test
     void getImageById_WithNonExistingImage_ShouldThrowNotFoundException() {
-        // given
         when(imageRepository.findById(nonExistingImageId)).thenReturn(Optional.empty());
 
         // when & then
@@ -212,7 +196,6 @@ class ImageServiceTest {
 
     @Test
     void getImageById_WithImageWithoutData_ShouldThrowBadRequestException() {
-        // given
         Images image = createImageEntityWithNullData();
 
         when(imageRepository.findById(existingImageId)).thenReturn(Optional.of(image));
@@ -227,7 +210,6 @@ class ImageServiceTest {
 
     @Test
     void existsById_WithExistingImage_ShouldNotThrowException() {
-        // given
         when(imageRepository.existsById(existingImageId)).thenReturn(true);
 
         // when & then
@@ -240,7 +222,6 @@ class ImageServiceTest {
 
     @Test
     void existsById_WithNonExistingImage_ShouldThrowNotFoundException() {
-        // given
         when(imageRepository.existsById(nonExistingImageId)).thenReturn(false);
 
         // when & then
@@ -253,7 +234,6 @@ class ImageServiceTest {
 
     @Test
     void validateImageHasData_WithImageWithData_ShouldNotThrowException() {
-        // given
         Images image = createImageEntity();
 
         when(imageRepository.findById(existingImageId)).thenReturn(Optional.of(image));
@@ -268,7 +248,6 @@ class ImageServiceTest {
 
     @Test
     void validateImageHasData_WithImageWithoutData_ShouldThrowBadRequestException() {
-        // given
         Images image = createImageEntityWithNullData();
 
         when(imageRepository.findById(existingImageId)).thenReturn(Optional.of(image));
@@ -283,7 +262,6 @@ class ImageServiceTest {
 
     @Test
     void validateImageHasData_WithNonExistingImage_ShouldThrowNotFoundException() {
-        // given
         when(imageRepository.findById(nonExistingImageId)).thenReturn(Optional.empty());
 
         // when & then

@@ -4,8 +4,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,6 +31,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.shop.dto.ProductDTO;
+import com.example.shop.exception.NotFoundException;
 import com.example.shop.model.Product;
 import com.example.shop.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +51,7 @@ class ProductControllerTest {
 
     private final UUID existingProductId = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private final UUID nonExistingProductId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    private final UUID ExistingSupplierId = UUID.fromString("afffffff-ffff-ffff-ffff-ffffffffffff");
 
     // Вспомогательные методы для создания тестовых данных
     private ProductDTO createValidProductDTO() {
@@ -58,6 +60,7 @@ class ProductControllerTest {
         dto.setCategory("Electronics");
         dto.setPrice(1000);
         dto.setAvailableQuantity(10);
+        dto.setSupplierId(ExistingSupplierId);
         dto.setLastRestokeDate(LocalDate.now());
         return dto;
     }
@@ -116,30 +119,13 @@ class ProductControllerTest {
         long count = 5;
         Product updatedProduct = createProductEntity();
 
-        doNothing().when(productService).existsById(existingProductId);
         when(productService.decreaseAmountProduct(existingProductId, count)).thenReturn(updatedProduct);
 
         mockMvc.perform(post("/api/v1/product/decrease/{id}", existingProductId)
                 .param("count", String.valueOf(count)))
                 .andExpect(status().isOk());
 
-        verify(productService, times(1)).existsById(existingProductId);
         verify(productService, times(1)).decreaseAmountProduct(existingProductId, count);
-    }
-
-    @Test
-    void reductionOfProduct_WithNonExistingProduct_Returns400() throws Exception {
-        long count = 5;
-
-        doNothing().when(productService).existsById(nonExistingProductId);
-
-        mockMvc.perform(post("/api/v1/product/decrease/{id}", nonExistingProductId)
-                .param("count", String.valueOf(count)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("не найден")));
-
-        verify(productService, times(1)).existsById(nonExistingProductId);
-        verify(productService, never()).decreaseAmountProduct(any(UUID.class), anyLong());
     }
 
     @Test
@@ -155,26 +141,24 @@ class ProductControllerTest {
     void findProductById_WithExistingProduct_Returns200() throws Exception {
         Product product = createProductEntity();
 
-        doNothing().when(productService).existsById(existingProductId);
         when(productService.findById(existingProductId)).thenReturn(product);
 
         mockMvc.perform(get("/api/v1/product/{id}", existingProductId))
                 .andExpect(status().isOk());
 
-        verify(productService, times(1)).existsById(existingProductId);
         verify(productService, times(1)).findById(existingProductId);
     }
 
     @Test
-    void findProductById_WithNonExistingProduct_Returns400() throws Exception {
-        doNothing().when(productService).existsById(nonExistingProductId);
+    void findProductById_WithNonExistingProduct_Returns404() throws Exception {
+
+        doThrow(NotFoundException.forProduct(ExistingSupplierId)).when(productService).findById(nonExistingProductId);
 
         mockMvc.perform(get("/api/v1/product/{id}", nonExistingProductId))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));
 
-        verify(productService, times(1)).existsById(nonExistingProductId);
-        verify(productService, never()).findById(any(UUID.class));
+        verify(productService, times(1)).findById(any(UUID.class));
     }
 
     @Test
@@ -203,25 +187,23 @@ class ProductControllerTest {
 
     @Test
     void deleteProduct_WithExistingProduct_Returns200() throws Exception {
-        doNothing().when(productService).existsById(existingProductId);
         doNothing().when(productService).deleteProduct(existingProductId);
 
         mockMvc.perform(delete("/api/v1/product/{id}", existingProductId))
                 .andExpect(status().isOk());
 
-        verify(productService, times(1)).existsById(existingProductId);
         verify(productService, times(1)).deleteProduct(existingProductId);
     }
 
     @Test
-    void deleteProduct_WithNonExistingProduct_Returns400() throws Exception {
-        doNothing().when(productService).existsById(nonExistingProductId);
+    void deleteProduct_WithNonExistingProduct_Returns404() throws Exception {
 
+        doThrow(NotFoundException.forProduct(nonExistingProductId))
+                .when(productService).deleteProduct(nonExistingProductId);
         mockMvc.perform(delete("/api/v1/product/{id}", nonExistingProductId))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(content().string(containsString("не найден")));
 
-        verify(productService, times(1)).existsById(nonExistingProductId);
-        verify(productService, never()).deleteProduct(any(UUID.class));
+        verify(productService).deleteProduct(nonExistingProductId);
     }
 }
