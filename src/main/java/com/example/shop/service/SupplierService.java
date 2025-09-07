@@ -48,8 +48,13 @@ public class SupplierService {
     public List<Supplier> getAll(Integer limit, Integer offset) {
         Pageable pageable = (limit == null && offset == null)
                 ? Pageable.unpaged()
-                : PageRequest.of(offset != null ? offset : 0, limit != null ? limit : 10);
+                : (limit != null && offset != null)
+                        ? PageRequest.of(offset, limit)
+                        : null;
 
+        if (pageable == null) {
+            throw new IllegalArgumentException("Недостаточно параметров для пагинации");
+        }
         return supplierRepository.findAll(pageable).getContent();
     }
 

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.shop.exception.BadRequestException;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.model.Images;
 import com.example.shop.service.ImageService;
@@ -44,10 +43,6 @@ public class ImageController {
         public ResponseEntity<UUID> addImage(
                         @PathVariable UUID productId,
                         @RequestBody byte[] byteArray) {
-
-                if (byteArray == null) {
-                        throw new BadRequestException("Пустой массив изображения");
-                }
 
                 Images image = imageService.addImageProduct(productId, byteArray);
                 return ResponseEntity.ok(image.getId());

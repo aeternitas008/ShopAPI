@@ -136,7 +136,6 @@ class ClientServiceTest {
 
     @Test
     void getAllClients_WithPagination_ShouldReturnPagedClients() {
-        // given
         int limit = 10;
         int offset = 0;
         Pageable pageable = PageRequest.of(offset, limit);
@@ -145,10 +144,8 @@ class ClientServiceTest {
 
         when(clientRepository.findAll(pageable)).thenReturn(page);
 
-        // when
         List<Client> result = clientService.getAllClients(limit, offset);
 
-        // then
         assertNotNull(result);
         assertEquals(1, result.size());
 
@@ -157,15 +154,12 @@ class ClientServiceTest {
 
     @Test
     void getAllClients_WithoutPagination_ShouldReturnAllClients() {
-        // given
         List<Client> clients = List.of(createClientEntity());
 
         when(clientRepository.findAll()).thenReturn(clients);
 
-        // when
         List<Client> result = clientService.getAllClients(null, null);
 
-        // then
         assertNotNull(result);
         assertEquals(1, result.size());
 
@@ -174,8 +168,25 @@ class ClientServiceTest {
     }
 
     @Test
+    void getAllClients_WithOnlyLimit_ShouldThrowIllegalArgumentException() {
+        int limit = 10;
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            clientService.getAllClients(limit, null);
+        });
+    }
+
+    @Test
+    void getAllClients_WithOnlyOffset_ShouldThrowIllegalArgumentException() {
+        int offset = 0;
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            clientService.getAllClients(null, offset);
+        });
+    }
+
+    @Test
     void updateClientAddress_WithExistingClient_ShouldUpdateAddress() {
-        // given
         AddressDTO addressDTO = createValidAddressDTO();
         Client existingClient = createClientEntity();
         Client updatedClient = createClientEntity();
@@ -184,10 +195,8 @@ class ClientServiceTest {
         when(addressMapper.toEntity(addressDTO)).thenReturn(new com.example.shop.model.Address());
         when(clientRepository.save(existingClient)).thenReturn(updatedClient);
 
-        // when
         Client result = clientService.updateClientAddress(existingClientId, addressDTO);
 
-        // then
         assertNotNull(result);
 
         verify(clientRepository, times(1)).findById(existingClientId);
@@ -197,12 +206,10 @@ class ClientServiceTest {
 
     @Test
     void updateClientAddress_WithNonExistingClient_ShouldThrowException() {
-        // given
         AddressDTO addressDTO = createValidAddressDTO();
 
         when(clientRepository.findById(nonExistingClientId)).thenReturn(Optional.empty());
 
-        // when & then
         assertThrows(NotFoundException.class, () -> {
             clientService.updateClientAddress(nonExistingClientId, addressDTO);
         });

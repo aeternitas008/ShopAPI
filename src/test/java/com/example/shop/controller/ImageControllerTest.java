@@ -28,11 +28,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.example.shop.dto.ImageDTO;
 import com.example.shop.exception.NotFoundException;
 import com.example.shop.model.Images;
 import com.example.shop.service.ImageService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(ImageController.class)
 @ExtendWith(MockitoExtension.class)
@@ -44,28 +42,9 @@ class ImageControllerTest {
     @MockBean
     private ImageService imageService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private final UUID existingImageId = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     private final UUID nonExistingImageId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private final UUID existingProductId = UUID.fromString("b2c3d4e5-f6b7-8901-bcde-f23456789012");
-
-    // Вспомогательные методы для создания тестовых данных
-    private ImageDTO createValidImageDTO() {
-        ImageDTO dto = ImageDTO.builder()
-                .image("test-image-data".getBytes())
-                .build();
-        return dto;
-    }
-
-    // Вспомогательные методы для создания тестовых данных
-    private ImageDTO createInvalidImageDTO() {
-        ImageDTO dto = ImageDTO.builder()
-                .image(null)
-                .build();
-        return dto;
-    }
 
     private byte[] createValidByteArray() {
         return "test-image-data".getBytes();
@@ -75,13 +54,6 @@ class ImageControllerTest {
         Images image = new Images();
         image.setId(existingImageId);
         image.setImage(createValidByteArray());
-        return image;
-    }
-
-    private Images createImageEntityWithNullData() {
-        Images image = new Images();
-        image.setId(existingImageId);
-        image.setImage(null);
         return image;
     }
 
@@ -109,15 +81,6 @@ class ImageControllerTest {
 
         verify(imageService, never()).addImageProduct(any(UUID.class), any());
     }
-
-    // @Test
-    // void addImage_WithNullBody_Returns400() throws Exception {
-    // mockMvc.perform(post("/api/v1/image/{productId}/add", existingProductId)
-    // .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE))
-    // .andExpect(status().isBadRequest());
-
-    // verify(imageService, never()).addImageProduct(any(UUID.class), any());
-    // }
 
     @Test
     void updateImage_WithExistingId_Returns200() throws Exception {

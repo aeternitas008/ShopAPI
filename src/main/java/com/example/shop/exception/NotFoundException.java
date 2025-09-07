@@ -11,10 +11,6 @@ public class NotFoundException extends RuntimeException {
         return new NotFoundException("Клиент с ID " + id + " не найден");
     }
 
-    public static NotFoundException forClients() {
-        return new NotFoundException("Клиенты не найдены");
-    }
-
     public static NotFoundException forImage(UUID id) {
         return new NotFoundException("Изображение с ID " + id + " не найдено");
     }
@@ -23,15 +19,8 @@ public class NotFoundException extends RuntimeException {
         return new NotFoundException("Товар с ID " + id + " не найден");
     }
 
-    public static NotFoundException forProducts() {
-        return new NotFoundException("Товары не найдены");
-    }
-
     public static NotFoundException forSupplier(UUID id) {
         return new NotFoundException("Поставщик с ID " + id + " не найден");
     }
 
-    public static NotFoundException forSuppliers() {
-        return new NotFoundException("Поставщики не найдены");
-    }
 }

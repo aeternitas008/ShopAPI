@@ -176,6 +176,34 @@ class SupplierServiceTest {
     }
 
     @Test
+    void getAll_WithInvalidPagination_ShouldThrowIllegalArgumentException() {
+        int limit = 10;
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            supplierService.getAll(limit, null);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            supplierService.getAll(null, 0);
+        });
+    }
+
+    @Test
+    void getAll_WithNullLimitAndOffset_ShouldReturnAllSuppliers() {
+        List<Supplier> suppliers = List.of(createSupplierEntity());
+        Page<Supplier> page = new PageImpl<>(suppliers);
+
+        when(supplierRepository.findAll(Pageable.unpaged())).thenReturn(page);
+
+        List<Supplier> result = supplierService.getAll(null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+
+        verify(supplierRepository, times(1)).findAll(Pageable.unpaged());
+    }
+
+    @Test
     void getAll_WithoutPagination_ShouldReturnAllSuppliers() {
 
         List<Supplier> suppliers = List.of(createSupplierEntity());

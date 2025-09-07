@@ -55,10 +55,6 @@ class ImageServiceTest {
         return dto;
     }
 
-    private byte[] createValidByteArray() {
-        return "test-image-data".getBytes();
-    }
-
     private Images createImageEntity() {
         Images image = new Images();
         image.setId(existingImageId);

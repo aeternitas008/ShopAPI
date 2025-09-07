@@ -56,11 +56,6 @@ public class ClientService {
         }
     }
 
-    // 4) Получение всех клиентов (без пагинацией)
-    public List<Client> getAllClients() {
-        return clientRepository.findAll();
-    }
-
     // 5) Обновление адреса клиента
     public Client updateClientAddress(UUID id, AddressDTO addressDTO) {
         Client client = findById(id);
