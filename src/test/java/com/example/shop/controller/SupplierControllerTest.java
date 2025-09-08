@@ -58,7 +58,7 @@ class SupplierControllerTest {
         SupplierDTO dto = new SupplierDTO();
         dto.setName("Иван");
         dto.setSurname("Иванов");
-        dto.setPhoneNumber("+79991234567");
+        dto.setPhoneNumber("79991234567");
         dto.setAddressDto(createValidAddressDTO());
         return dto;
     }
@@ -68,7 +68,7 @@ class SupplierControllerTest {
         supplier.setId(existingSupplierId);
         supplier.setName("Иван");
         supplier.setSurname("Иванов");
-        supplier.setPhoneNumber("+79991234567");
+        supplier.setPhoneNumber("79991234567");
         return supplier;
     }
 
